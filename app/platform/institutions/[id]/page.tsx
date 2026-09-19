@@ -1,0 +1,19 @@
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { platformApi, type PlatformInstitution } from "@/lib/platform-api";
+
+export default function InstitutionDetailPage() {
+  const { id } = useParams<{ id: string }>(); const [institution, setInstitution] = useState<PlatformInstitution | null>(null); const [error, setError] = useState(""); const [working, setWorking] = useState(false);
+  const load = useCallback(() => platformApi.get(id).then(setInstitution).catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load school.")), [id]);
+  useEffect(() => { void load(); }, [load]);
+  async function changeStatus() { if (!institution || !window.confirm(`${institution.is_active ? "Deactivate" : "Activate"} ${institution.name}?`)) return; setWorking(true); try { setInstitution(await platformApi.status(id, !institution.is_active)); } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to update status."); } finally { setWorking(false); } }
+  async function changeTrial(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); const days = Number(new FormData(event.currentTarget).get("trialDays")); if (!Number.isInteger(days) || days < 1) return setError("Trial period must be a positive whole number."); if (!window.confirm("Update this trial period?")) return; setWorking(true); try { setInstitution(await platformApi.trial(id, days)); } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to update trial."); } finally { setWorking(false); } }
+  if (error && !institution) return <Card className="p-6 text-red-700">{error}</Card>; if (!institution) return <p className="text-slate-600">Loading school…</p>;
+  return <div className="max-w-3xl space-y-5"><Link href="/platform/institutions" className="text-sm font-medium text-orange-600">← Institutions</Link><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h1 className="text-2xl font-bold text-slate-950">{institution.name}</h1><p className="text-slate-600">{institution.subdomain} · {institution.timezone}</p></div><Button variant={institution.is_active ? "destructive" : "default"} disabled={working} onClick={changeStatus}>{institution.is_active ? "Deactivate school" : "Activate school"}</Button></div>{error && <Card className="p-4 text-red-700">{error}</Card>}<div className="grid gap-4 sm:grid-cols-3"><Card className="p-5"><p className="text-sm text-slate-500">Access status</p><p className="mt-1 font-semibold">{institution.is_active ? "Active" : "Inactive"}</p></Card><Card className="p-5"><p className="text-sm text-slate-500">Trial status</p><p className="mt-1 font-semibold capitalize">{institution.trialState.replace("_", " ")}</p></Card><Card className="p-5"><p className="text-sm text-slate-500">Trial ends</p><p className="mt-1 font-semibold">{institution.trial_ends_on ?? "—"}</p></Card></div><Card className="p-6"><h2 className="font-semibold text-slate-950">Change trial period</h2><form onSubmit={changeTrial} className="mt-4 flex max-w-sm gap-3"><Input required name="trialDays" type="number" min="1" step="1" defaultValue="14" /><Button disabled={working}>Update trial</Button></form></Card></div>;
+}

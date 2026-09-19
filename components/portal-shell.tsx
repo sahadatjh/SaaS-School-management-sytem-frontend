@@ -220,31 +220,44 @@ function Navigation({
   const { profile } = usePortal();
   const pathname = usePathname();
 
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {
-      "student-management": true, // open by default as shown in reference design
-    };
-    navigationItems.forEach((item) => {
-      if (hasActiveChild(item, pathname)) {
-        initial[item.id] = true;
-      }
-    });
-    return initial;
+  // Strict single-open accordion: only one menu folder can be open at a time
+  const [openMenuId, setOpenMenuId] = useState<string | null>(() => {
+    if (pathname === "/dashboard") return null;
+    const activeItem = navigationItems.find(
+      (item) =>
+        item.children && item.children.length > 0 && hasActiveChild(item, pathname),
+    );
+    return activeItem ? activeItem.id : null;
   });
 
+  const [openSubMenuId, setOpenSubMenuId] = useState<string | null>(null);
+
   useEffect(() => {
-    navigationItems.forEach((item) => {
-      if (hasActiveChild(item, pathname)) {
-        setOpenIds((prev) => ({ ...prev, [item.id]: true }));
-      }
-    });
+    if (pathname === "/dashboard") {
+      setOpenMenuId(null);
+      setOpenSubMenuId(null);
+      return;
+    }
+
+    const activeItem = navigationItems.find(
+      (item) =>
+        item.children && item.children.length > 0 && hasActiveChild(item, pathname),
+    );
+    if (activeItem) {
+      setOpenMenuId(activeItem.id);
+    }
   }, [pathname]);
 
-  const toggleItem = (id: string) => {
-    setOpenIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const toggleTopLevel = (id: string) => {
+    setOpenMenuId((current) => {
+      const next = current === id ? null : id;
+      setOpenSubMenuId(null);
+      return next;
+    });
+  };
+
+  const toggleSubLevel = (id: string) => {
+    setOpenSubMenuId((current) => (current === id ? null : id));
   };
 
   const permissions = new Set(profile?.permissions ?? []);
@@ -261,7 +274,7 @@ function Navigation({
 
         const Icon = item.icon;
         const hasChildren = item.children && item.children.length > 0;
-        const isOpen = !!openIds[item.id];
+        const isOpen = openMenuId === item.id;
         const active = isRouteActive(item.href, pathname);
         const childActive = hasActiveChild(item, pathname);
         const isHeaderActive = active || childActive || isOpen;
@@ -303,7 +316,7 @@ function Navigation({
           <div key={item.id} className="space-y-0.5">
             <button
               type="button"
-              onClick={() => toggleItem(item.id)}
+              onClick={() => toggleTopLevel(item.id)}
               aria-expanded={isOpen}
               className={cn(
                 "flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors text-left",
@@ -356,14 +369,14 @@ function Navigation({
 
                   // Level 2 item that is also expandable (e.g. Certificates)
                   if (hasSubChildren) {
-                    const isSubOpen = !!openIds[subItem.id];
+                    const isSubOpen = openSubMenuId === subItem.id;
                     const isSubActive = hasActiveChild(subItem, pathname);
 
                     return (
                       <div key={subItem.id} className="space-y-0.5">
                         <button
                           type="button"
-                          onClick={() => toggleItem(subItem.id)}
+                          onClick={() => toggleSubLevel(subItem.id)}
                           aria-expanded={isSubOpen}
                           className={cn(
                             "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors text-left",

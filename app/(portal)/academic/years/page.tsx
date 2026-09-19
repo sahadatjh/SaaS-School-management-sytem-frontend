@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { portalApi } from "@/lib/portal-api";
+import { toast } from "@/components/ui/sonner";
 import type { AcademicYear } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
@@ -120,6 +121,7 @@ export default function AcademicYearsPage() {
     try {
       await portalApi.academicYears.delete(deleteTarget.id);
       setYears((prev) => prev.filter((y) => y.id !== deleteTarget.id));
+      toast.success(`Academic year "${deleteTarget.name}" deleted successfully.`);
       setDeleteTarget(null);
     } catch (err: unknown) {
       const msg =
@@ -127,13 +129,14 @@ export default function AcademicYearsPage() {
           ? err.message
           : "Failed to delete academic year. It may be linked to active records.";
       setDeleteError(msg);
+      toast.error(msg);
     } finally {
       setIsDeleting(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="w-full">
       {/* Compact breadcrumb trail */}
       <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-500">
         <span>Academic</span>

@@ -1,4 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Edu Soft portal
+
+The portal calls the versioned NestJS API directly with Bearer tokens. Set this browser-visible, non-secret API URL before starting the portal:
+
+```bash
+NEXT_PUBLIC_BACKEND_API_BASE_URL=http://localhost:8000/api/v1
+```
+
+The backend `CORS_ORIGINS` value must include the portal origin (for example, `http://localhost:3000`).
 
 ## Getting Started
 

@@ -19,26 +19,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
+import { ActionTooltip } from "@/components/ui/tooltip";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
+import { formatDate } from "@/lib/date";
 import type { AcademicYear } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
-
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return "—";
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
 
 export default function AcademicYearsPage() {
   const [years, setYears] = useState<AcademicYear[]>([]);
@@ -302,31 +289,33 @@ export default function AcademicYearsPage() {
                       <StatusBadge isActive={year.is_active} />
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <div className="inline-flex items-center gap-1.5 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          className="h-7 px-2 text-xs text-slate-600 hover:text-orange-600"
-                        >
-                          <Link
-                            href={`/academic/years/${year.id}/edit`}
-                            aria-label={`Edit ${year.name}`}
+                      <div className="inline-flex items-center gap-1 justify-end">
+                        <ActionTooltip content="Edit">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            className="size-7 text-slate-500 hover:text-orange-600 hover:bg-orange-50"
                           >
-                            <Pencil className="size-3 mr-1" />
-                            Edit
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteTarget(year)}
-                          className="h-7 px-2 text-xs text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-                          aria-label={`Delete ${year.name}`}
-                        >
-                          <Trash2 className="size-3 mr-1" />
-                          Delete
-                        </Button>
+                            <Link
+                              href={`/academic/years/${year.id}/edit`}
+                              aria-label={`Edit ${year.name}`}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Link>
+                          </Button>
+                        </ActionTooltip>
+                        <ActionTooltip content="Delete">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteTarget(year)}
+                            className="size-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+                            aria-label={`Delete ${year.name}`}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </ActionTooltip>
                       </div>
                     </td>
                   </tr>

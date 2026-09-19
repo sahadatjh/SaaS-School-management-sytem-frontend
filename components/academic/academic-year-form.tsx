@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { DateInput } from "@/components/ui/date-input";
 import { portalApi } from "@/lib/portal-api";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
@@ -20,10 +21,17 @@ interface AcademicYearFormProps {
 
 function toDateInputValue(dateStr?: string | Date): string {
   if (!dateStr) return "";
+  if (typeof dateStr === "string") {
+    const match = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
   try {
-    const d = new Date(dateStr);
+    const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     if (isNaN(d.getTime())) return "";
-    return d.toISOString().split("T")[0];
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   } catch {
     return "";
   }
@@ -180,14 +188,12 @@ export function AcademicYearForm({
                 htmlFor="start-date"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5"
               >
-                Start Date <span className="text-rose-500">*</span>
+                Start Date (dd/mm/yyyy) <span className="text-rose-500">*</span>
               </label>
-              <Input
+              <DateInput
                 id="start-date"
-                type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 text-sm"
+                onChange={setStartDate}
                 required
                 disabled={submitting}
               />
@@ -198,14 +204,12 @@ export function AcademicYearForm({
                 htmlFor="end-date"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5"
               >
-                End Date <span className="text-rose-500">*</span>
+                End Date (dd/mm/yyyy) <span className="text-rose-500">*</span>
               </label>
-              <Input
+              <DateInput
                 id="end-date"
-                type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 text-sm"
+                onChange={setEndDate}
                 required
                 disabled={submitting}
               />

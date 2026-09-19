@@ -1,7 +1,27 @@
 "use client";
 
 import { clearAuthTokens, getAuthTokens, setAuthTokens, type AuthTokens } from "@/lib/auth-tokens";
-import type { ApiEnvelope, DashboardSummary, PortalProfile } from "@/lib/contracts";
+import type {
+  ApiEnvelope,
+  DashboardSummary,
+  PortalProfile,
+  AcademicYear,
+  AcademicYearPayload,
+  Class,
+  ClassPayload,
+  Department,
+  DepartmentPayload,
+  Shift,
+  ShiftPayload,
+  Section,
+  SectionPayload,
+  Group,
+  GroupPayload,
+  Subject,
+  SubjectPayload,
+  TeacherAssignment,
+  TeacherAssignmentPayload,
+} from "@/lib/contracts";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ?? "http://localhost:8000/api/v1").replace(/\/+$/, "");
 
@@ -58,7 +78,41 @@ async function authenticatedRequest<T>(path: string, init: RequestInit = {}, ret
   return parseEnvelope<T>(response);
 }
 
+/* ------------------------------------------------------------------ */
+/*  Generic CRUD resource factory                                      */
+/* ------------------------------------------------------------------ */
+type CrudResource<TEntity, TPayload> = {
+  list: () => Promise<TEntity[]>;
+  get: (id: string) => Promise<TEntity>;
+  create: (payload: TPayload) => Promise<TEntity>;
+  update: (id: string, payload: Partial<TPayload>) => Promise<TEntity>;
+  delete: (id: string) => Promise<void>;
+};
+
+function crudResource<TEntity, TPayload>(basePath: string): CrudResource<TEntity, TPayload> {
+  return {
+    list: () => authenticatedRequest<TEntity[]>(basePath),
+    get: (id) => authenticatedRequest<TEntity>(`${basePath}/${id}`),
+    create: (payload) =>
+      authenticatedRequest<TEntity>(basePath, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    update: (id, payload) =>
+      authenticatedRequest<TEntity>(`${basePath}/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    delete: (id) =>
+      authenticatedRequest<void>(`${basePath}/${id}`, { method: "DELETE" }),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Public API surface                                                 */
+/* ------------------------------------------------------------------ */
 export const portalApi = {
+  /* Auth */
   async login(credentials: { email: string; password: string }): Promise<void> {
     const response = await backend("/auth/login", { method: "POST", body: JSON.stringify(credentials) });
     const tokens = await parseEnvelope<AuthTokens>(response);
@@ -75,4 +129,14 @@ export const portalApi = {
       clearAuthTokens();
     }
   },
+
+  /* Academic resources */
+  academicYears: crudResource<AcademicYear, AcademicYearPayload>("/academic-years"),
+  classes: crudResource<Class, ClassPayload>("/classes"),
+  departments: crudResource<Department, DepartmentPayload>("/departments"),
+  shifts: crudResource<Shift, ShiftPayload>("/shifts"),
+  sections: crudResource<Section, SectionPayload>("/sections"),
+  groups: crudResource<Group, GroupPayload>("/groups"),
+  subjects: crudResource<Subject, SubjectPayload>("/subjects"),
+  teacherAssignments: crudResource<TeacherAssignment, TeacherAssignmentPayload>("/teacher-assignments"),
 };

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import Link from "next/link";
 import {
   AlertCircle,
   Loader2,
@@ -23,6 +22,7 @@ import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
 import { useListQuery } from "@/hooks/use-list-query";
 import { SortableHeader } from "@/components/ui/sortable-header";
+import { DepartmentDialog } from "@/components/academic/department-dialog";
 import type { Department } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
@@ -37,6 +37,7 @@ export default function DepartmentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [formTarget, setFormTarget] = useState<Department | null | undefined>(undefined);
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
@@ -53,6 +54,7 @@ export default function DepartmentsPage() {
 
       const data = await portalApi.departments.list(params);
       setDepartments(data);
+      setVisibleCount(PAGE_SIZE);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to load departments."
@@ -64,7 +66,7 @@ export default function DepartmentsPage() {
   }, [sortState.sortBy, sortState.sortOrder, debouncedSearch]);
 
   useEffect(() => {
-    loadDepartments();
+    void Promise.resolve().then(loadDepartments);
   }, [loadDepartments]);
 
   const visibleDepartments = useMemo(() => {
@@ -113,6 +115,11 @@ export default function DepartmentsPage() {
     }
   }
 
+  function handleFormSaved() {
+    setFormTarget(undefined);
+    void loadDepartments();
+  }
+
   return (
     <div className="w-full flex flex-col h-full">
       {/* Breadcrumb Line (Acordion only /Academic/Departments) */}
@@ -124,6 +131,22 @@ export default function DepartmentsPage() {
         <span className="text-slate-300">/</span>
         <span className="text-slate-800 font-semibold">Departments</span>
       </nav>
+
+      {deleteError && (
+        <div className="mb-3 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-800 shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-rose-600" />
+            <span>{deleteError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDeleteError(null)}
+            className="text-xs font-semibold text-rose-600 hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {error ? (
         <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-800">
@@ -186,14 +209,13 @@ export default function DepartmentsPage() {
 
               {/* Add New Button */}
               <Button
-                asChild
+                type="button"
                 size="sm"
+                onClick={() => setFormTarget(null)}
                 className="h-9 bg-orange-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:ring-orange-500 shrink-0"
               >
-                <Link href="/academic/departments/new">
-                  <Plus className="mr-1.5 size-4" />
-                  Add New
-                </Link>
+                <Plus className="mr-1.5 size-4" />
+                Add New
               </Button>
             </div>
           </div>
@@ -244,11 +266,14 @@ export default function DepartmentsPage() {
                               Clear Search
                             </Button>
                           ) : (
-                            <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700">
-                              <Link href="/academic/departments/new">
-                                <Plus className="mr-1.5 size-3.5" />
-                                Add Department
-                              </Link>
+                            <Button
+                              size="sm"
+                              type="button"
+                              onClick={() => setFormTarget(null)}
+                              className="bg-orange-600 hover:bg-orange-700"
+                            >
+                              <Plus className="mr-1.5 size-3.5" />
+                              Add Department
                             </Button>
                           )
                         }
@@ -274,17 +299,14 @@ export default function DepartmentsPage() {
                           <div className="inline-flex items-center gap-1 justify-end">
                             <ActionTooltip content="Edit">
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
-                                asChild
+                                onClick={() => setFormTarget(dept)}
                                 className="size-7 text-slate-500 hover:text-orange-600 hover:bg-orange-50"
+                                aria-label={`Edit ${dept.name}`}
                               >
-                                <Link
-                                  href={`/academic/departments/${dept.id}/edit`}
-                                  aria-label={`Edit ${dept.name}`}
-                                >
-                                  <Pencil className="size-3.5" />
-                                </Link>
+                                <Pencil className="size-3.5" />
                               </Button>
                             </ActionTooltip>
                             <ActionTooltip content="Delete">
@@ -329,6 +351,15 @@ export default function DepartmentsPage() {
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
+      />
+
+      <DepartmentDialog
+        open={formTarget !== undefined}
+        department={formTarget ?? undefined}
+        onOpenChange={(open) => {
+          if (!open) setFormTarget(undefined);
+        }}
+        onSaved={handleFormSaved}
       />
     </div>
   );

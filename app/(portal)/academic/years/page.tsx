@@ -23,7 +23,7 @@ import { ActionTooltip } from "@/components/ui/tooltip";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
 import { formatDate } from "@/lib/date";
-import { useTableSort } from "@/hooks/use-table-sort";
+import { useListQuery } from "@/hooks/use-list-query";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import type { AcademicYear } from "@/lib/contracts";
 
@@ -33,7 +33,6 @@ export default function AcademicYearsPage() {
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // Delete state
@@ -43,7 +42,7 @@ export default function AcademicYearsPage() {
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
-  const { sortState, requestSort } = useTableSort();
+  const { sortState, requestSort, search, setSearch, debouncedSearch } = useListQuery();
 
   const loadAcademicYears = useCallback(async () => {
     setLoading(true);
@@ -52,6 +51,7 @@ export default function AcademicYearsPage() {
       const params = new URLSearchParams();
       if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
       if (sortState.sortOrder) params.set("sort_order", sortState.sortOrder);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const data = await portalApi.academicYears.list(params);
       setYears(data);
@@ -65,23 +65,17 @@ export default function AcademicYearsPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortState.sortBy, sortState.sortOrder]);
+  }, [sortState.sortBy, sortState.sortOrder, debouncedSearch]);
 
   useEffect(() => {
     loadAcademicYears();
   }, [loadAcademicYears]);
 
-  const filteredYears = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return years;
-    return years.filter((y) => y.name.toLowerCase().includes(q));
-  }, [years, search]);
-
   const visibleYears = useMemo(() => {
-    return filteredYears.slice(0, visibleCount);
-  }, [filteredYears, visibleCount]);
+    return years.slice(0, visibleCount);
+  }, [years, visibleCount]);
 
-  const hasMore = visibleCount < filteredYears.length;
+  const hasMore = visibleCount < years.length;
 
   // Infinite scroll observer
   useEffect(() => {
@@ -89,7 +83,7 @@ export default function AcademicYearsPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredYears.length));
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, years.length));
         }
       },
       { threshold: 0.1 },
@@ -101,7 +95,7 @@ export default function AcademicYearsPage() {
     return () => {
       if (target) observer.unobserve(target);
     };
-  }, [hasMore, loading, filteredYears.length]);
+  }, [hasMore, loading, years.length]);
 
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
@@ -158,7 +152,7 @@ export default function AcademicYearsPage() {
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <h1 className="text-base font-bold text-slate-900">Academic Years</h1>
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-              {filteredYears.length}
+              {years.length}
             </span>
           </div>
 
@@ -246,7 +240,7 @@ export default function AcademicYearsPage() {
               </Button>
             }
           />
-        ) : filteredYears.length === 0 ? (
+        ) : years.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-500">
             No academic years matching &ldquo;{search}&rdquo;.
           </div>

@@ -21,7 +21,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ActionTooltip } from "@/components/ui/tooltip";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
-import { useTableSort } from "@/hooks/use-table-sort";
+import { useListQuery } from "@/hooks/use-list-query";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import type { Department } from "@/lib/contracts";
 
@@ -31,7 +31,6 @@ export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // Delete state
@@ -41,7 +40,7 @@ export default function DepartmentsPage() {
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
-  const { sortState, requestSort } = useTableSort();
+  const { sortState, requestSort, search, setSearch, debouncedSearch } = useListQuery();
 
   const loadDepartments = useCallback(async () => {
     setLoading(true);
@@ -50,6 +49,7 @@ export default function DepartmentsPage() {
       const params = new URLSearchParams();
       if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
       if (sortState.sortOrder) params.set("sort_order", sortState.sortOrder);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const data = await portalApi.departments.list(params);
       setDepartments(data);
@@ -61,24 +61,17 @@ export default function DepartmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortState.sortBy, sortState.sortOrder]);
+  }, [sortState.sortBy, sortState.sortOrder, debouncedSearch]);
 
   useEffect(() => {
     loadDepartments();
   }, [loadDepartments]);
 
-  // Filter and chunking
-  const filteredDepartments = useMemo(() => {
-    if (!search.trim()) return departments;
-    const lower = search.toLowerCase();
-    return departments.filter((dept) => dept.name.toLowerCase().includes(lower));
-  }, [departments, search]);
-
   const visibleDepartments = useMemo(() => {
-    return filteredDepartments.slice(0, visibleCount);
-  }, [filteredDepartments, visibleCount]);
+    return departments.slice(0, visibleCount);
+  }, [departments, visibleCount]);
 
-  const hasMore = visibleCount < filteredDepartments.length;
+  const hasMore = visibleCount < departments.length;
 
   // Infinite scroll intersection observer
   useEffect(() => {
@@ -156,7 +149,7 @@ export default function DepartmentsPage() {
               </h1>
               {!loading && (
                 <span className="inline-flex items-center justify-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 border border-slate-200/60">
-                  {filteredDepartments.length} record{filteredDepartments.length !== 1 ? 's' : ''}
+                  {departments.length} record{departments.length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>

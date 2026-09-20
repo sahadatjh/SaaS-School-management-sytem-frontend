@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { SortState } from '../../hooks/use-table-sort';
+import { SortState } from '../../hooks/use-list-query';
 import { cn } from '../../lib/utils';
 
 interface SortableHeaderProps extends React.ThHTMLAttributes<HTMLTableCellElement> {

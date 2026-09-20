@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -7,11 +7,24 @@ export interface SortState {
   sortOrder: SortOrder | undefined;
 }
 
-export function useTableSort(defaultSortBy?: string, defaultSortOrder?: SortOrder) {
+export function useListQuery(defaultSortBy?: string, defaultSortOrder?: SortOrder) {
   const [sortState, setSortState] = useState<SortState>({
     sortBy: defaultSortBy,
     sortOrder: defaultSortOrder,
   });
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   const requestSort = useCallback((key: string) => {
     setSortState((prev) => {
@@ -23,5 +36,5 @@ export function useTableSort(defaultSortBy?: string, defaultSortOrder?: SortOrde
     });
   }, []);
 
-  return { sortState, requestSort };
+  return { sortState, requestSort, search, setSearch, debouncedSearch };
 }

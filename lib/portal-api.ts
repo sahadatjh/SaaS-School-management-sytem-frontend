@@ -89,9 +89,23 @@ type CrudResource<TEntity, TPayload> = {
   delete: (id: string) => Promise<void>;
 };
 
+type PaginatedList<TEntity> = {
+  items: TEntity[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+};
+
 function crudResource<TEntity, TPayload>(basePath: string): CrudResource<TEntity, TPayload> {
   return {
-    list: (params) => authenticatedRequest<TEntity[]>(params ? `${basePath}?${params.toString()}` : basePath),
+    list: async (params) => {
+      const result = await authenticatedRequest<TEntity[] | PaginatedList<TEntity>>(
+        params ? `${basePath}?${params.toString()}` : basePath,
+      );
+      return Array.isArray(result) ? result : result.items;
+    },
     get: (id) => authenticatedRequest<TEntity>(`${basePath}/${id}`),
     create: (payload) =>
       authenticatedRequest<TEntity>(basePath, {

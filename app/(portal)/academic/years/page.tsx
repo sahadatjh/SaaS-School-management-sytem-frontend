@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import Link from "next/link";
 import {
   AlertCircle,
   Calendar,
@@ -25,6 +24,7 @@ import { toast } from "@/components/ui/sonner";
 import { formatDate } from "@/lib/date";
 import { useListQuery } from "@/hooks/use-list-query";
 import { SortableHeader } from "@/components/ui/sortable-header";
+import { AcademicYearDialog } from "@/components/academic/academic-year-dialog";
 import type { AcademicYear } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
@@ -39,6 +39,7 @@ export default function AcademicYearsPage() {
   const [deleteTarget, setDeleteTarget] = useState<AcademicYear | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [formTarget, setFormTarget] = useState<AcademicYear | null | undefined>(undefined);
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
@@ -68,7 +69,7 @@ export default function AcademicYearsPage() {
   }, [sortState.sortBy, sortState.sortOrder, debouncedSearch]);
 
   useEffect(() => {
-    loadAcademicYears();
+    void Promise.resolve().then(loadAcademicYears);
   }, [loadAcademicYears]);
 
   const visibleYears = useMemo(() => {
@@ -116,6 +117,11 @@ export default function AcademicYearsPage() {
     } finally {
       setIsDeleting(false);
     }
+  }
+
+  function handleFormSaved() {
+    setFormTarget(undefined);
+    void loadAcademicYears();
   }
 
   return (
@@ -186,13 +192,14 @@ export default function AcademicYearsPage() {
 
             <Button
               size="sm"
-              asChild
+              type="button"
+              onClick={() => setFormTarget(null)}
               className="h-9 px-3.5 text-xs shrink-0 bg-orange-600 hover:bg-orange-700 font-semibold"
             >
-              <Link href="/academic/years/new">
+              <>
                 <Plus className="mr-1.5 size-3.5" />
                 New Academic Year
-              </Link>
+              </>
             </Button>
           </div>
         </div>
@@ -232,11 +239,14 @@ export default function AcademicYearsPage() {
             title="No academic years configured"
             description="Create your first academic year to establish sessions, enroll students, and schedule classes."
             action={
-              <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700">
-                <Link href="/academic/years/new">
-                  <Plus className="mr-1.5 size-3.5" />
-                  Create Academic Year
-                </Link>
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => setFormTarget(null)}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                <Plus className="mr-1.5 size-3.5" />
+                Create Academic Year
               </Button>
             }
           />
@@ -282,15 +292,11 @@ export default function AcademicYearsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            asChild
+                            onClick={() => setFormTarget(year)}
                             className="size-7 text-slate-500 hover:text-orange-600 hover:bg-orange-50"
+                            aria-label={`Edit ${year.name}`}
                           >
-                            <Link
-                              href={`/academic/years/${year.id}/edit`}
-                              aria-label={`Edit ${year.name}`}
-                            >
-                              <Pencil className="size-3.5" />
-                            </Link>
+                            <Pencil className="size-3.5" />
                           </Button>
                         </ActionTooltip>
                         <ActionTooltip content="Delete">
@@ -338,6 +344,15 @@ export default function AcademicYearsPage() {
         variant="destructive"
         isLoading={isDeleting}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <AcademicYearDialog
+        open={formTarget !== undefined}
+        year={formTarget ?? undefined}
+        onOpenChange={(open) => {
+          if (!open) setFormTarget(undefined);
+        }}
+        onSaved={handleFormSaved}
       />
     </div>
   );

@@ -17,6 +17,8 @@ import type { AcademicYear, AcademicYearPayload } from "@/lib/contracts";
 interface AcademicYearFormProps {
   initialData?: AcademicYear;
   isEdit?: boolean;
+  onSaved?: () => void;
+  onCancel?: () => void;
 }
 
 function toDateInputValue(dateStr?: string | Date): string {
@@ -43,6 +45,8 @@ function toDateInputValue(dateStr?: string | Date): string {
 export function AcademicYearForm({
   initialData,
   isEdit = false,
+  onSaved,
+  onCancel,
 }: AcademicYearFormProps) {
   const router = useRouter();
 
@@ -97,8 +101,12 @@ export function AcademicYearForm({
         await portalApi.academicYears.create(payload);
         toast.success("Academic year created successfully.");
       }
-      router.push("/academic/years");
-      router.refresh();
+      if (onSaved) {
+        onSaved();
+      } else {
+        router.push("/academic/years");
+        router.refresh();
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -249,15 +257,27 @@ export function AcademicYearForm({
 
           {/* Form Actions Footer: Cancel + Save Changes / Update */}
           <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              asChild
-              disabled={submitting}
-            >
-              <Link href="/academic/years">Cancel</Link>
-            </Button>
+            {onCancel ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={submitting}
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                asChild
+                disabled={submitting}
+              >
+                <Link href="/academic/years">Cancel</Link>
+              </Button>
+            )}
             <Button
               type="submit"
               size="sm"

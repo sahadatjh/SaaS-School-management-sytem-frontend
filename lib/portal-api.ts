@@ -82,7 +82,7 @@ async function authenticatedRequest<T>(path: string, init: RequestInit = {}, ret
 /*  Generic CRUD resource factory                                      */
 /* ------------------------------------------------------------------ */
 type CrudResource<TEntity, TPayload> = {
-  list: () => Promise<TEntity[]>;
+  list: (params?: URLSearchParams) => Promise<TEntity[]>;
   get: (id: string) => Promise<TEntity>;
   create: (payload: TPayload) => Promise<TEntity>;
   update: (id: string, payload: Partial<TPayload>) => Promise<TEntity>;
@@ -91,7 +91,7 @@ type CrudResource<TEntity, TPayload> = {
 
 function crudResource<TEntity, TPayload>(basePath: string): CrudResource<TEntity, TPayload> {
   return {
-    list: () => authenticatedRequest<TEntity[]>(basePath),
+    list: (params) => authenticatedRequest<TEntity[]>(params ? `${basePath}?${params.toString()}` : basePath),
     get: (id) => authenticatedRequest<TEntity>(`${basePath}/${id}`),
     create: (payload) =>
       authenticatedRequest<TEntity>(basePath, {

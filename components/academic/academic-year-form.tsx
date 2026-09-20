@@ -27,9 +27,9 @@ function toDateInputValue(dateStr?: string | Date): string {
   try {
     const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     if (isNaN(d.getTime())) return "";
-    
+
     // Convert to Asia/Dhaka timezone to prevent UTC offsets from shifting the date backwards
-    return new Intl.DateTimeFormat('en-CA', { 
+    return new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Dhaka',
       year: 'numeric',
       month: '2-digit',

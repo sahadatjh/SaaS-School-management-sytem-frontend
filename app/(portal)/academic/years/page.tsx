@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -23,6 +23,8 @@ import { ActionTooltip } from "@/components/ui/tooltip";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
 import { formatDate } from "@/lib/date";
+import { useTableSort } from "@/hooks/use-table-sort";
+import { SortableHeader } from "@/components/ui/sortable-header";
 import type { AcademicYear } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
@@ -41,11 +43,17 @@ export default function AcademicYearsPage() {
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
-  async function loadAcademicYears() {
+  const { sortState, requestSort } = useTableSort();
+
+  const loadAcademicYears = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await portalApi.academicYears.list();
+      const params = new URLSearchParams();
+      if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
+      if (sortState.sortOrder) params.set("sort_order", sortState.sortOrder);
+
+      const data = await portalApi.academicYears.list(params);
       setYears(data);
       setVisibleCount(PAGE_SIZE);
     } catch (err: unknown) {
@@ -57,11 +65,11 @@ export default function AcademicYearsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [sortState.sortBy, sortState.sortOrder]);
 
   useEffect(() => {
     loadAcademicYears();
-  }, []);
+  }, [loadAcademicYears]);
 
   const filteredYears = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -247,18 +255,10 @@ export default function AcademicYearsPage() {
             <table className="w-full text-left text-sm border-collapse">
               <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-xs">
                 <tr>
-                  <th scope="col" className="px-5 py-3">
-                    Academic Year
-                  </th>
-                  <th scope="col" className="px-5 py-3">
-                    Start Date
-                  </th>
-                  <th scope="col" className="px-5 py-3">
-                    End Date
-                  </th>
-                  <th scope="col" className="px-5 py-3">
-                    Status
-                  </th>
+                  <SortableHeader columnKey="name" title="Academic Year" sortState={sortState} onRequestSort={requestSort} />
+                  <SortableHeader columnKey="start_date" title="Start Date" sortState={sortState} onRequestSort={requestSort} />
+                  <SortableHeader columnKey="end_date" title="End Date" sortState={sortState} onRequestSort={requestSort} />
+                  <SortableHeader columnKey="is_active" title="Status" sortState={sortState} onRequestSort={requestSort} />
                   <th scope="col" className="px-5 py-3 text-right">
                     Actions
                   </th>

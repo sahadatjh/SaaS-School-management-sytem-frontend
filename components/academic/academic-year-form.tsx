@@ -121,21 +121,22 @@ export function AcademicYearForm({
 
   return (
     <div className="w-full">
-      {/* Breadcrumb Line */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-500"
-      >
-        <span>Academic</span>
-        <span className="text-slate-300">/</span>
-        <Link href="/academic/years" className="hover:text-slate-800 transition-colors">
-          Academic Years
-        </Link>
-        <span className="text-slate-300">/</span>
-        <span className="text-slate-800 font-semibold">
-          {isEdit ? "Edit Session" : "New Session"}
-        </span>
-      </nav>
+      {!onCancel && (
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-500"
+        >
+          <span>Academic</span>
+          <span className="text-slate-300">/</span>
+          <Link href="/academic/years" className="hover:text-slate-800 transition-colors">
+            Academic Years
+          </Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-800 font-semibold">
+            {isEdit ? "Edit Session" : "New Session"}
+          </span>
+        </nav>
+      )}
 
       {error && (
         <div className="mb-4 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
@@ -153,25 +154,37 @@ export function AcademicYearForm({
         </div>
       )}
 
-      <Card className="w-full overflow-hidden border-slate-200/90 shadow-xs">
-        {/* Form Card Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/academic/years"
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              aria-label="Back to Academic Years"
-            >
-              <ArrowLeft className="size-4" />
-            </Link>
-            <h1 className="text-base font-bold text-slate-900">
-              {isEdit ? `Edit Academic Year: ${initialData?.name}` : "New Academic Year"}
-            </h1>
+      <Card
+        className={cn(
+          "w-full border-slate-200/90",
+          onCancel ? "overflow-visible border-0 shadow-none" : "overflow-hidden shadow-xs",
+        )}
+      >
+        {!onCancel && (
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/academic/years"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                aria-label="Back to Academic Years"
+              >
+                <ArrowLeft className="size-4" />
+              </Link>
+              <h1 className="text-base font-bold text-slate-900">
+                {isEdit ? `Edit Academic Year: ${initialData?.name}` : "New Academic Year"}
+              </h1>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 bg-white">
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            "space-y-4 bg-white",
+            onCancel ? "px-5 pb-5 pt-4" : "p-5",
+          )}
+        >
           <div>
             <label
               htmlFor="year-name"
@@ -188,9 +201,6 @@ export function AcademicYearForm({
               required
               disabled={submitting}
             />
-            <p className="mt-1 text-xs text-slate-400">
-              Descriptive label identifying the academic calendar or session.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -233,9 +243,6 @@ export function AcademicYearForm({
               <span className="text-sm font-semibold text-slate-800">
                 Status
               </span>
-              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                Active academic sessions are available for enrollment, attendance, and exam management.
-              </p>
             </div>
             <div className="flex items-center gap-2.5 shrink-0">
               <span

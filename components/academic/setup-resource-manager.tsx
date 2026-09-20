@@ -135,7 +135,6 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-950">{label.plural}</h1>
-          <p className="mt-1 text-sm text-slate-600">Configure {label.plural.toLowerCase()} for this institution.</p>
         </div>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-2.5 size-4 text-slate-400" />

@@ -137,9 +137,6 @@ export function DepartmentForm({
               required
               disabled={submitting}
             />
-            <p className="mt-1 text-xs text-slate-400">
-              Descriptive name for the department or stream.
-            </p>
           </div>
 
           {/* Active Status with Modern Toggle Switch */}
@@ -148,9 +145,6 @@ export function DepartmentForm({
               <span className="text-sm font-semibold text-slate-800">
                 Status
               </span>
-              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                Active departments are available for assigning to classes and students.
-              </p>
             </div>
             <div className="flex items-center gap-2.5 shrink-0">
               <span

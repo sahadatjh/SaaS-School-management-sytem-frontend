@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -21,6 +21,8 @@ import { EmptyState } from "@/components/empty-state";
 import { ActionTooltip } from "@/components/ui/tooltip";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
+import { useTableSort } from "@/hooks/use-table-sort";
+import { SortableHeader } from "@/components/ui/sortable-header";
 import type { Department } from "@/lib/contracts";
 
 const PAGE_SIZE = 15;
@@ -39,18 +41,18 @@ export default function DepartmentsPage() {
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
 
-  async function loadDepartments() {
+  const { sortState, requestSort } = useTableSort();
+
+  const loadDepartments = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await portalApi.departments.list();
-      // Sort: active first, then alphabetically by name
-      const sorted = data.sort((a, b) => {
-        if (a.is_active && !b.is_active) return -1;
-        if (!a.is_active && b.is_active) return 1;
-        return a.name.localeCompare(b.name);
-      });
-      setDepartments(sorted);
+      const params = new URLSearchParams();
+      if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
+      if (sortState.sortOrder) params.set("sort_order", sortState.sortOrder);
+
+      const data = await portalApi.departments.list(params);
+      setDepartments(data);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to load departments."
@@ -59,11 +61,11 @@ export default function DepartmentsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [sortState.sortBy, sortState.sortOrder]);
 
   useEffect(() => {
     loadDepartments();
-  }, []);
+  }, [loadDepartments]);
 
   // Filter and chunking
   const filteredDepartments = useMemo(() => {
@@ -208,18 +210,8 @@ export default function DepartmentsPage() {
             <table className="w-full text-left text-sm text-slate-600 border-collapse">
               <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_#e2e8f0]">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Department Name
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Status
-                  </th>
+                  <SortableHeader columnKey="name" title="Department Name" sortState={sortState} onRequestSort={requestSort} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500" />
+                  <SortableHeader columnKey="is_active" title="Status" sortState={sortState} onRequestSort={requestSort} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500" />
                   <th
                     scope="col"
                     className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500"

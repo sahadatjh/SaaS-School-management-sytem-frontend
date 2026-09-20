@@ -5,24 +5,22 @@
 export function formatDate(dateInput?: string | Date | null): string {
   if (!dateInput) return "—";
 
-  if (typeof dateInput === "string") {
-    // If it's a date string starting with YYYY-MM-DD
-    const match = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (match) {
-      const [, y, m, d] = match;
-      return `${d}/${m}/${y}`;
-    }
+  if (typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    const [, y, m, d] = dateInput.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/) || [];
+    if (y && m && d) return `${d}/${m}/${y}`;
   }
 
   try {
     const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
     if (isNaN(d.getTime())) return String(dateInput);
 
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-
-    return `${day}/${month}/${year}`;
+    // Enforce Asia/Dhaka to prevent UTC offsets shifting the date backwards
+    return new Intl.DateTimeFormat('en-GB', { 
+      timeZone: 'Asia/Dhaka',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(d);
   } catch {
     return String(dateInput);
   }

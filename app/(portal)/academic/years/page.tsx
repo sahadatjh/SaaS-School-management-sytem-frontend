@@ -46,13 +46,7 @@ export default function AcademicYearsPage() {
     setError(null);
     try {
       const data = await portalApi.academicYears.list();
-      // Sort: active first, then newest start date
-      const sorted = [...data].sort((a, b) => {
-        if (a.is_active && !b.is_active) return -1;
-        if (!a.is_active && b.is_active) return 1;
-        return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
-      });
-      setYears(sorted);
+      setYears(data);
       setVisibleCount(PAGE_SIZE);
     } catch (err: unknown) {
       const message =

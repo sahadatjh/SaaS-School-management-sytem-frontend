@@ -21,17 +21,20 @@ interface AcademicYearFormProps {
 
 function toDateInputValue(dateStr?: string | Date): string {
   if (!dateStr) return "";
-  if (typeof dateStr === "string") {
-    const match = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (match) return match[1];
+  if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
   }
   try {
     const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     if (isNaN(d.getTime())) return "";
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
+    
+    // Convert to Asia/Dhaka timezone to prevent UTC offsets from shifting the date backwards
+    return new Intl.DateTimeFormat('en-CA', { 
+      timeZone: 'Asia/Dhaka',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(d);
   } catch {
     return "";
   }
@@ -73,8 +76,8 @@ export function AcademicYearForm({
       return;
     }
 
-    if (new Date(startDate) > new Date(endDate)) {
-      setError("Start date cannot be later than end date.");
+    if (new Date(startDate) >= new Date(endDate)) {
+      setError("End date must be later than start date.");
       return;
     }
 

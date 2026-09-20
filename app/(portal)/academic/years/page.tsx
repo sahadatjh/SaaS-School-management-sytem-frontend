@@ -123,9 +123,9 @@ export default function AcademicYearsPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col h-full">
       {/* Compact breadcrumb trail */}
-      <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+      <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-500 shrink-0">
         <span>Academic</span>
         <span className="text-slate-300">/</span>
         <span className="text-slate-800 font-semibold">Academic Years</span>
@@ -133,7 +133,7 @@ export default function AcademicYearsPage() {
 
       {/* Delete error notification */}
       {deleteError && (
-        <div className="mb-3 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-800">
+        <div className="mb-3 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-800 shrink-0">
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0 text-rose-600" />
             <span>{deleteError}</span>
@@ -149,9 +149,9 @@ export default function AcademicYearsPage() {
       )}
 
       {/* Main Table Card */}
-      <Card className="overflow-hidden shadow-xs border-slate-200/90">
+      <Card className="w-full border-slate-200/90 shadow-xs flex flex-col min-h-0 relative overflow-hidden flex-1">
         {/* Integrated Table Toolbar Header: Title + Filter Search + Add Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-white">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-white shrink-0 z-20">
           {/* Left: Title and Record Count */}
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <h1 className="text-base font-bold text-slate-900">Academic Years</h1>
@@ -249,7 +249,7 @@ export default function AcademicYearsPage() {
             No academic years matching &ldquo;{search}&rdquo;.
           </div>
         ) : (
-          <div className="overflow-y-auto max-h-[calc(100vh-12rem)] min-h-[300px]">
+          <div className="flex-1 overflow-auto bg-slate-50/30">
             <table className="w-full text-left text-sm border-collapse">
               <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-xs">
                 <tr>

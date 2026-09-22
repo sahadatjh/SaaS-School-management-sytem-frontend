@@ -22,6 +22,30 @@ export type PortalProfile = {
   permissions: string[];
 };
 
+export type InstitutionProfile = {
+  id: string;
+  name: string;
+  eiin?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  contactEmail?: string | null;
+  website?: string | null;
+  timezone: string;
+  branding?: { primaryColor?: string } | null;
+  logoUrl?: string | null;
+};
+
+export type InstitutionProfilePayload = {
+  name?: string;
+  eiin?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  contactEmail?: string | null;
+  website?: string | null;
+  timezone?: string;
+  branding?: { primaryColor?: string } | null;
+};
+
 /* ------------------------------------------------------------------ */
 /*  Dashboard                                                          */
 /* ------------------------------------------------------------------ */

@@ -6,33 +6,50 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/sonner";
 import { portalApi } from "@/lib/portal-api";
 
 export default function LoginPage() {
 	const router = useRouter();
-	const [error, setError] = useState("");
+	const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
 	const [busy, setBusy] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setBusy(true);
-		setError("");
 
 		const form = new FormData(event.currentTarget);
+		const email = String(form.get("email") ?? "").trim();
+		const password = String(form.get("password") ?? "");
+		const errors = {
+			email: email ? "" : "Email is required.",
+			password: password ? "" : "Password is required.",
+		};
+
+		setFieldErrors(errors);
+		if (errors.email || errors.password) return;
+
+		if (!/^\S+@\S+\.\S+$/.test(email)) {
+			toast.error("Enter a valid email address.");
+			return;
+		}
+
+		setBusy(true);
 
 		try {
 			await portalApi.login({
-				email: String(form.get("email") ?? ""),
-				password: String(form.get("password") ?? ""),
+				email,
+				password,
 			});
+			toast.success("Signed in successfully.");
 			router.replace("/dashboard");
 		} catch (cause) {
-			setError(
+			toast.error(
 				cause instanceof Error
 					? cause.message
 					: "Unable to sign in. Please try again.",
 			);
+		} finally {
 			setBusy(false);
 		}
 	}
@@ -46,27 +63,40 @@ export default function LoginPage() {
 				<h1 className="text-3xl font-bold text-slate-950">Welcome back</h1>
 				<p className="mt-2 text-slate-600">Sign in to your institution portal.</p>
 
-				<form className="mt-8 space-y-5" onSubmit={submit}>
+				<form className="mt-8 space-y-5" noValidate onSubmit={submit}>
 					<label className="block text-sm font-medium text-slate-800">
 						Email
 						<Input
-							required
 							name="email"
 							type="email"
 							autoComplete="email"
 							className="mt-2"
+							aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
+							aria-invalid={Boolean(fieldErrors.email)}
+							onChange={() =>
+								setFieldErrors((current) => ({ ...current, email: "" }))
+							}
 						/>
+						{fieldErrors.email && (
+							<p id="login-email-error" role="alert" className="mt-1 text-sm text-red-600">
+								{fieldErrors.email}
+							</p>
+						)}
 					</label>
 
 					<label className="block text-sm font-medium text-slate-800">
 						Password
 						<div className="relative mt-2">
 							<Input
-								required
 								name="password"
 								type={showPassword ? "text" : "password"}
 								autoComplete="current-password"
 								className="pr-11"
+								aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
+								aria-invalid={Boolean(fieldErrors.password)}
+								onChange={() =>
+									setFieldErrors((current) => ({ ...current, password: "" }))
+								}
 							/>
 							<button
 								type="button"
@@ -83,6 +113,11 @@ export default function LoginPage() {
 								)}
 							</button>
 						</div>
+						{fieldErrors.password && (
+							<p id="login-password-error" role="alert" className="mt-1 text-sm text-red-600">
+								{fieldErrors.password}
+							</p>
+						)}
 					</label>
 
 					<div className="text-right">
@@ -94,11 +129,6 @@ export default function LoginPage() {
 						</Link>
 					</div>
 
-					{error && (
-						<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-							{error}
-						</p>
-					)}
 
 					<Button type="submit" className="w-full" disabled={busy}>
 						{busy ? "Signing in..." : "Sign in"}

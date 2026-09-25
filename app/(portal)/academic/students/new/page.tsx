@@ -83,7 +83,7 @@ const EMPTY: StudentPayload = {
   },
   // Personal
   name_english: "", name_bangla: "", date_of_birth: "", gender: "",
-  status: "active", blood_group: "", nationality: "", religion: "",
+  status: "active", blood_group: null, nationality: "", religion: null,
   admission_date: "", photo_url: "",
   // Previous school
   prev_school_name: "", prev_class: "", prev_section: "", prev_roll: "",
@@ -292,12 +292,12 @@ export default function NewStudentPage() {
           <option value="female">Female</option>
           <option value="other">Other</option>
         </Select>
-        <Select id="blood_group" label="Blood Group" value={form.blood_group ?? ""} onChange={(v) => set("blood_group", v)}>
+        <Select id="blood_group" label="Blood Group" value={form.blood_group ?? ""} onChange={(v) => set("blood_group", v || null)}>
           <option value="">Select…</option>
           {["A+","A-","B+","B-","O+","O-","AB+","AB-"].map((bg) => <option key={bg}>{bg}</option>)}
         </Select>
         <Field id="nationality" label="Nationality" value={form.nationality ?? ""} onChange={(v) => set("nationality", v)} placeholder="Bangladeshi" />
-        <Select id="religion" label="Religion" value={form.religion ?? ""} onChange={(v) => set("religion", v)}>
+        <Select id="religion" label="Religion" value={form.religion ?? ""} onChange={(v) => set("religion", v || null)}>
           <option value="">Select…</option>
           <option>Islam</option><option>Hinduism</option><option>Buddhism</option><option>Christianity</option><option>Other</option>
         </Select>

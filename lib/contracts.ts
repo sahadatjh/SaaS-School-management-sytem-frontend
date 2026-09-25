@@ -1,3 +1,5 @@
+import { BloodGroup, Religion } from './enums';
+
 /* ------------------------------------------------------------------ */
 /*  Shared API envelope                                                */
 /* ------------------------------------------------------------------ */
@@ -270,9 +272,9 @@ export type Student = {
   name_bangla: string | null;
   date_of_birth: string;
   gender: string;
-  blood_group: string | null;
+  blood_group: BloodGroup | null;
   nationality: string | null;
-  religion: string | null;
+  religion: Religion | null;
   photo_url: string | null;
   admission_date: string | null;
   is_imported: boolean;

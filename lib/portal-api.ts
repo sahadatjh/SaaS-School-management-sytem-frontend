@@ -10,6 +10,7 @@ import type {
   ApiEnvelope,
   DashboardSummary,
   PortalProfile,
+  PortalUserProfile,
   InstitutionProfile,
   InstitutionProfilePayload,
   InstitutionRole,
@@ -199,6 +200,25 @@ export const portalApi = {
     await parseEnvelope<never>(response);
   },
   profile: () => authenticatedRequest<PortalProfile>("/auth/me"),
+  userProfile: {
+    update: (payload: { displayName: string }) =>
+      authenticatedRequest<PortalUserProfile>("/auth/me/profile", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    uploadAvatar: (avatar: File) => {
+      const body = new FormData();
+      body.append("avatar", avatar);
+      return authenticatedRequest<PortalUserProfile>("/auth/me/avatar", {
+        method: "POST",
+        body,
+      });
+    },
+    removeAvatar: () =>
+      authenticatedRequest<PortalUserProfile>("/auth/me/avatar", {
+        method: "DELETE",
+      }),
+  },
   institutionProfile: {
     get: () => authenticatedRequest<InstitutionProfile>("/institution-profile"),
     update: (payload: InstitutionProfilePayload) =>

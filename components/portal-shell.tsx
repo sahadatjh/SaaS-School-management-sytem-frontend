@@ -461,6 +461,27 @@ function Navigation({
   );
 }
 
+function UserAvatar({
+  displayName,
+  email,
+  avatarUrl,
+}: {
+  displayName: string | null;
+  email: string;
+  avatarUrl?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const initial = (displayName?.trim() || email.trim()).charAt(0).toUpperCase() || "U";
+  if (avatarUrl && !failed) {
+    return (
+      // The backend serves this uploaded asset from its public avatar path.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={avatarUrl} alt="" className="size-full object-cover" onError={() => setFailed(true)} />
+    );
+  }
+  return <span aria-hidden="true">{initial}</span>;
+}
+
 export function PortalShell({ children }: { children: React.ReactNode }) {
   const { profile, loading } = usePortal();
   const router = useRouter();
@@ -629,11 +650,29 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" aria-label="Open user menu">
-                Account
+              <Button
+                variant="ghost"
+                aria-label="Open user menu"
+                className="size-10 rounded-full bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
+              >
+                <UserAvatar
+                  key={profile.user.avatar?.url ?? "fallback"}
+                  displayName={profile.user.displayName}
+                  email={profile.user.email}
+                  avatarUrl={profile.user.avatar?.url}
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="z-50 mt-2 rounded-lg border bg-white p-1 shadow-lg">
+            <DropdownMenuContent className="z-50 mt-2 min-w-52 rounded-lg border bg-white p-1 shadow-lg">
+              <div className="border-b px-3 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">{profile.user.displayName || profile.user.email}</p>
+                <p className="truncate text-xs text-slate-500">{profile.user.email}</p>
+              </div>
+              <DropdownMenuItem asChild>
+                <Link href="/settings/profile" className="mt-1 flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm outline-none hover:bg-slate-100">
+                  <User className="size-4" />My Profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={signOut}
                 className="cursor-pointer rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"

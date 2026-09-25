@@ -17,8 +17,22 @@ export type Institution = {
   logo_url?: string;
 };
 
+export type PortalAvatar = {
+  url: string;
+  path: string;
+  extension: string;
+};
+
+export type PortalUserProfile = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatar: PortalAvatar | null;
+};
+
 export type PortalProfile = {
   institution: Institution;
+  user: PortalUserProfile;
   permissions: string[];
 };
 

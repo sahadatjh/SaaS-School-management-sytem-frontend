@@ -32,6 +32,9 @@ import type {
   SubjectPayload,
   TeacherAssignment,
   TeacherAssignmentPayload,
+  Student,
+  StudentPayload,
+  StudentListResponse,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
@@ -274,4 +277,27 @@ export const portalApi = {
   teacherAssignments: crudResource<TeacherAssignment, TeacherAssignmentPayload>(
     "/teacher-assignments",
   ),
+
+  /* Students */
+  students: {
+    list: (params: URLSearchParams) =>
+      authenticatedRequest<StudentListResponse>(`/students?${params.toString()}`),
+    get: (id: string) =>
+      authenticatedRequest<Student>(`/students/${id}`),
+    create: (payload: StudentPayload) =>
+      authenticatedRequest<Student>("/students", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    update: (id: string, payload: Partial<StudentPayload>) =>
+      authenticatedRequest<Student>(`/students/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    delete: (id: string) =>
+      authenticatedRequest<{ success: boolean }>(`/students/${id}`, {
+        method: "DELETE",
+      }),
+  },
 };
+

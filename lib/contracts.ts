@@ -233,3 +233,125 @@ export type TeacherAssignmentPayload = {
   is_class_teacher?: boolean;
   is_active?: boolean;
 };
+
+/* ------------------------------------------------------------------ */
+/*  Students                                                           */
+/* ------------------------------------------------------------------ */
+export type Enrollment = {
+  id: string;
+  institution_id: string;
+  student_id: string;
+  academic_year_id: string;
+  academic_year_name: string;
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+  shift_id: string;
+  shift_name: string;
+  medium: string;
+  group_id: string | null;
+  group_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  roll_no: number;
+  registration_no: string | null;
+  enrollment_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Student = {
+  id: string;
+  institution_id: string;
+  student_id: string;
+  name_english: string;
+  name_bangla: string | null;
+  date_of_birth: string;
+  gender: string;
+  blood_group: string | null;
+  nationality: string | null;
+  religion: string | null;
+  photo_url: string | null;
+  admission_date: string | null;
+  is_imported: boolean;
+  status: string;
+
+  prev_school_name: string | null;
+  prev_class: string | null;
+  prev_section: string | null;
+  prev_roll: string | null;
+  prev_group: string | null;
+  prev_session: string | null;
+  tc_number: string | null;
+
+  present_village: string;
+  present_thana: string | null;
+  present_district: string | null;
+  present_division: string | null;
+  present_post_code: string | null;
+
+  permanent_village: string | null;
+  permanent_thana: string | null;
+  permanent_district: string | null;
+  permanent_division: string | null;
+  permanent_post_code: string | null;
+  is_same_address: boolean;
+
+  primary_sms_number: string;
+  secondary_sms_number: string | null;
+  sms_recipients: string[] | null;
+
+  parents_sms_number: string;
+  father_name_bangla: string | null;
+  father_name_english: string | null;
+  father_occupation: string | null;
+  father_occupation_details: string | null;
+  father_mobile: string | null;
+  father_nid: string | null;
+  father_annual_income: number | null;
+
+  mother_name_bangla: string | null;
+  mother_name_english: string | null;
+  mother_occupation: string | null;
+  mother_occupation_details: string | null;
+  mother_mobile: string | null;
+  mother_nid: string | null;
+  mother_annual_income: number | null;
+
+  local_guardian_name: string | null;
+  local_guardian_contact: string | null;
+
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Joined from enrollments on list/detail views
+  current_enrollment: Enrollment | null;
+};
+
+export type StudentPayload = Omit<Student,
+  'id' | 'institution_id' | 'student_id' | 'is_imported' |
+  'created_at' | 'updated_at' | 'current_enrollment'
+> & {
+  enrollment: {
+    academic_year_id: string;
+    class_id: string;
+    section_id: string;
+    shift_id: string;
+    medium: string;
+    roll_no: number;
+    group_id?: string;
+    department_id?: string;
+    major_subject_group?: string;
+    year?: string;
+    registration_no?: string;
+  };
+};
+
+export type StudentListResponse = {
+  items: Student[];
+  pagination: { page: number; limit: number; total: number };
+};
+

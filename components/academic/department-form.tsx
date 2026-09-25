@@ -40,7 +40,7 @@ export function DepartmentForm({
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setError("Please provide a department name (e.g. Science, Humanities).");
+      setError("Please provide a department name (e.g. Mathmatics, Physics).");
       return;
     }
 
@@ -146,7 +146,7 @@ export function DepartmentForm({
             </label>
             <Input
               id="department-name"
-              placeholder="e.g. Science, Humanities, Business Studies"
+              placeholder="e.g. Mathmatics, Physics, CSE"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="h-10 text-sm"

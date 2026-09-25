@@ -60,9 +60,8 @@ export const navigationItems: NavItem[] = [
     label: "Student Management",
     icon: Users,
     children: [
-      { id: "all-students", label: "All Students", href: "/students" },
-      { id: "add-student", label: "Add Student", href: "/students/new" },
-      { id: "admission", label: "Admission", href: "/students/admission" },
+      { id: "all-students", label: "All Students", href: "/academic/students" },
+      { id: "add-student", label: "Add Student", href: "/academic/students/new" },
       { id: "student-promotion", label: "Student Promotion", href: "/students/promotion" },
       {
         id: "certificates",
@@ -196,10 +195,12 @@ export const navigationItems: NavItem[] = [
 
 function isRouteActive(href?: string, currentPath = ""): boolean {
   if (!href) return false;
-  if (href === "/dashboard") {
-    return currentPath === "/dashboard";
-  }
-  return currentPath === href || currentPath.startsWith(href + "/");
+  if (currentPath === href) return true;
+  if (href === "/dashboard") return false;
+
+  // For other routes, allow prefix matching (e.g. for /edit pages), 
+  // but exclude /new pages since they usually have their own sidebar item.
+  return currentPath.startsWith(href + "/") && !currentPath.endsWith("/new");
 }
 
 function hasActiveChild(item: NavItem, currentPath = ""): boolean {

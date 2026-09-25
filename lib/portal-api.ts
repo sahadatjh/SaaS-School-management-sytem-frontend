@@ -179,6 +179,25 @@ export const portalApi = {
       throw new PortalApiError(401, "Unable to start your session.");
     setAuthTokens(tokens);
   },
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await backend("/auth/password-reset-requests", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    if (response.status === 204) return;
+    await parseEnvelope<never>(response);
+  },
+  async resetPassword(payload: {
+    token: string;
+    password: string;
+  }): Promise<void> {
+    const response = await backend("/auth/password-resets", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (response.status === 204) return;
+    await parseEnvelope<never>(response);
+  },
   profile: () => authenticatedRequest<PortalProfile>("/auth/me"),
   institutionProfile: {
     get: () => authenticatedRequest<InstitutionProfile>("/institution-profile"),

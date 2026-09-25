@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -83,6 +84,15 @@ export default function LoginPage() {
 							</button>
 						</div>
 					</label>
+
+					<div className="text-right">
+						<Link
+							href="/forgot-password"
+							className="text-sm font-medium text-orange-600 hover:text-orange-700"
+						>
+							Forgot password?
+						</Link>
+					</div>
 
 					{error && (
 						<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">

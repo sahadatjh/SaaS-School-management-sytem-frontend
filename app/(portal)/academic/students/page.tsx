@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  AlertCircle, Loader2, Pencil, Plus,
+  AlertCircle, Download, FileDown, Loader2, Pencil, Plus, Upload,
   Search, Trash2, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,18 @@ import { EmptyState } from "@/components/empty-state";
 import { ActionTooltip } from "@/components/ui/tooltip";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { portalApi } from "@/lib/portal-api";
+import { usePortal } from "@/components/portal-context";
+import { StudentImportDialog } from "@/components/students/student-import-dialog";
 import { toast } from "@/components/ui/sonner";
 import { useListQuery } from "@/hooks/use-list-query";
-import type { Student } from "@/lib/contracts";
+import type { Student, StudentExportJob } from "@/lib/contracts";
 
 const PAGE_SIZE = 20;
 
 export default function StudentsPage() {
+  const { profile } = usePortal();
+  const canImport = profile?.permissions.includes("students.create") ?? false;
+  const canExport = profile?.permissions.includes("students.read") ?? false;
   const [students, setStudents] = useState<Student[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -31,6 +36,10 @@ export default function StudentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportJob, setExportJob] = useState<StudentExportJob | null>(null);
+  const [exportWorking, setExportWorking] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
   const { sortState, requestSort, search, setSearch, debouncedSearch } = useListQuery();
@@ -59,8 +68,8 @@ export default function StudentsPage() {
 
   // Reload on sort/search change
   useEffect(() => {
-    setStudents([]);
-    loadStudents(1, false);
+    const timer = window.setTimeout(() => { void loadStudents(1, false); }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadStudents]);
 
   const hasMore = students.length < total;
@@ -78,6 +87,53 @@ export default function StudentsPage() {
     if (target) observer.observe(target);
     return () => { if (target) observer.unobserve(target); };
   }, [hasMore, loading, page, loadStudents]);
+
+  useEffect(() => {
+    if (!exportJob || !["queued", "exporting"].includes(exportJob.status)) return;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      try {
+        const next = await portalApi.studentTransfers.exportStatus(exportJob.id);
+        if (!cancelled) setExportJob(next);
+      } catch (cause) {
+        if (!cancelled) setExportError(cause instanceof Error ? cause.message : "Unable to load export status.");
+      }
+    }, 2000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [exportJob]);
+
+  async function requestExport() {
+    setExportWorking(true);
+    setExportError(null);
+    try {
+      const filters = new URLSearchParams();
+      if (debouncedSearch) filters.set("search", debouncedSearch);
+      setExportJob(await portalApi.studentTransfers.requestExport(filters));
+    } catch (cause) {
+      setExportError(cause instanceof Error ? cause.message : "Unable to request export.");
+    } finally {
+      setExportWorking(false);
+    }
+  }
+
+  async function downloadExport() {
+    if (!exportJob?.downloadReady) return;
+    setExportWorking(true);
+    setExportError(null);
+    try {
+      const blob = await portalApi.studentTransfers.downloadExport(exportJob.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `students-${exportJob.id}.xlsx`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (cause) {
+      setExportError(cause instanceof Error ? cause.message : "Unable to download export.");
+    } finally {
+      setExportWorking(false);
+    }
+  }
 
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
@@ -106,7 +162,7 @@ export default function StudentsPage() {
             {total}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <Input
@@ -116,6 +172,23 @@ export default function StudentsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          {canImport && (
+            <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setImportOpen(true)}>
+              <Upload className="size-3.5" /> Import
+            </Button>
+          )}
+          {canExport && (
+            exportJob?.downloadReady ? (
+              <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={downloadExport} disabled={exportWorking}>
+                <Download className="size-3.5" /> Download export
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={requestExport} disabled={exportWorking || exportJob?.status === "queued" || exportJob?.status === "exporting"}>
+                {exportWorking || exportJob?.status === "queued" || exportJob?.status === "exporting" ? <Loader2 className="size-3.5 animate-spin" /> : <FileDown className="size-3.5" />}
+                {exportJob?.status === "queued" || exportJob?.status === "exporting" ? "Preparing export" : "Export"}
+              </Button>
+            )
+          )}
           <Button asChild size="sm" className="h-8 gap-1.5 text-xs">
             <Link href="/academic/students/new">
               <Plus className="h-3.5 w-3.5" />
@@ -132,6 +205,9 @@ export default function StudentsPage() {
           {error}
         </div>
       )}
+      {deleteError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{deleteError}</p>}
+      {exportError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{exportError}</p>}
+      {exportJob?.status === "failed" && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{exportJob.error ?? "Export failed. Try again."}</p>}
 
       {/* Table */}
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
@@ -259,6 +335,11 @@ export default function StudentsPage() {
         variant="destructive"
         isLoading={isDeleting}
         onConfirm={handleDeleteConfirm}
+      />
+      <StudentImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onCompleted={() => { void loadStudents(1, false); }}
       />
     </div>
   );

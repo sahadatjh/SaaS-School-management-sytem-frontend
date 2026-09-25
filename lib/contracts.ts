@@ -357,3 +357,58 @@ export type StudentListResponse = {
   pagination: { page: number; limit: number; total: number };
 };
 
+export type StudentImportBatch = {
+  id: string;
+  status: "queued" | "previewing" | "preview_ready" | "commit_queued" | "committing" | "completed" | "failed";
+  sourceFilename: string | null;
+  totalRows: number;
+  readyRows: number;
+  processedRows: number;
+  importedRows: number;
+  failedRows: number;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+export type StudentImportRow = {
+  rowNumber: number;
+  status: "pending" | "imported" | "failed";
+  source: Record<string, string>;
+  normalised: {
+    sourceStudentId?: string;
+    student: { name_english: string; date_of_birth?: string };
+    enrollment: {
+      academic_year_name: string;
+      academic_year_id?: string;
+      class_name: string;
+      class_id?: string;
+      section_name: string;
+      section_id?: string;
+      shift_name: string;
+      shift_id?: string;
+      medium: string;
+      group_name?: string;
+      group_id?: string;
+      roll_no?: number;
+    };
+  };
+  validationErrors: string[];
+  studentId: string | null;
+  enrollmentId: string | null;
+};
+
+export type StudentImportRowsResponse = {
+  items: StudentImportRow[];
+  pagination: { page: number; limit: number; total: number };
+};
+
+export type StudentExportJob = {
+  id: string;
+  status: "queued" | "exporting" | "completed" | "failed";
+  totalRows: number;
+  error: string | null;
+  downloadReady: boolean;
+  createdAt: string;
+  completedAt: string | null;
+};

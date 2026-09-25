@@ -35,6 +35,9 @@ import type {
   Student,
   StudentPayload,
   StudentListResponse,
+  StudentImportBatch,
+  StudentImportRowsResponse,
+  StudentExportJob,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
@@ -120,6 +123,18 @@ async function authenticatedRequest<T>(
   if (response.status === 401 && !retried && (await refreshTokens()))
     return authenticatedRequest<T>(path, init, true);
   return parseEnvelope<T>(response);
+}
+
+async function authenticatedDownload(path: string, retried = false): Promise<Blob> {
+  const tokens = getAuthTokens();
+  if (!tokens) throw new PortalApiError(401, "Your session has ended.");
+  const response = await backend(path, {
+    headers: { Authorization: `Bearer ${tokens.accessToken}` },
+  });
+  if (response.status === 401 && !retried && (await refreshTokens()))
+    return authenticatedDownload(path, true);
+  if (!response.ok) await parseEnvelope<never>(response);
+  return response.blob();
 }
 
 /* ------------------------------------------------------------------ */
@@ -299,5 +314,33 @@ export const portalApi = {
         method: "DELETE",
       }),
   },
+  studentTransfers: {
+    upload: (file: File) => {
+      const form = new FormData();
+      form.set("file", file);
+      return authenticatedRequest<StudentImportBatch>("/students/imports", {
+        method: "POST",
+        body: form,
+      });
+    },
+    importStatus: (id: string) =>
+      authenticatedRequest<StudentImportBatch>(`/students/imports/${id}`),
+    importRows: (id: string, page: number, limit = 100) =>
+      authenticatedRequest<StudentImportRowsResponse>(
+        `/students/imports/${id}/rows?page=${page}&limit=${limit}`,
+      ),
+    commit: (id: string) =>
+      authenticatedRequest<StudentImportBatch>(`/students/imports/${id}/commit`, {
+        method: "POST",
+      }),
+    requestExport: (filters: URLSearchParams) =>
+      authenticatedRequest<StudentExportJob>(
+        `/students/exports?${filters.toString()}`,
+        { method: "POST" },
+      ),
+    exportStatus: (id: string) =>
+      authenticatedRequest<StudentExportJob>(`/students/exports/${id}`),
+    downloadExport: (id: string) =>
+      authenticatedDownload(`/students/exports/${id}/download`),
+  },
 };
-

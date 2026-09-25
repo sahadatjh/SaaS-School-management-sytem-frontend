@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dmyToIso, isoToDmy } from "@/lib/date";
 
@@ -31,6 +32,10 @@ const MONTH_NAMES = [
 ];
 
 const WEEK_DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const CALENDAR_WIDTH = 288;
+const CALENDAR_HEIGHT = 360;
+const VIEWPORT_MARGIN = 8;
+const CALENDAR_GAP = 6;
 
 function applyDmyMask(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 8);
@@ -77,6 +82,29 @@ export function DateInput({
   const [viewMonth, setViewMonth] = useState(validInitial.getMonth());
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState({ left: 0, top: 0 });
+
+  function getPopoverPosition() {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return { left: VIEWPORT_MARGIN, top: VIEWPORT_MARGIN };
+
+    const left = Math.min(
+      Math.max(VIEWPORT_MARGIN, rect.left),
+      Math.max(VIEWPORT_MARGIN, window.innerWidth - CALENDAR_WIDTH - VIEWPORT_MARGIN),
+    );
+    const below = rect.bottom + CALENDAR_GAP;
+    const top = below + CALENDAR_HEIGHT <= window.innerHeight - VIEWPORT_MARGIN
+      ? below
+      : Math.max(VIEWPORT_MARGIN, rect.top - CALENDAR_HEIGHT - CALENDAR_GAP);
+
+    return { left, top };
+  }
+
+  function openCalendar() {
+    setPopoverPosition(getPopoverPosition());
+    setOpen(true);
+  }
 
   // Sync display value when parent value changes
   useEffect(() => {
@@ -98,10 +126,8 @@ export function DateInput({
     if (!open) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      if (!containerRef.current?.contains(target) && !popoverRef.current?.contains(target)) {
         setOpen(false);
       }
     }
@@ -117,6 +143,21 @@ export function DateInput({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function repositionPopover() {
+      setPopoverPosition(getPopoverPosition());
+    }
+
+    window.addEventListener("resize", repositionPopover);
+    window.addEventListener("scroll", repositionPopover, true);
+    return () => {
+      window.removeEventListener("resize", repositionPopover);
+      window.removeEventListener("scroll", repositionPopover, true);
     };
   }, [open]);
 
@@ -244,7 +285,8 @@ export function DateInput({
         <button
           type="button"
           onClick={() => {
-            if (!disabled) setOpen((prev) => !prev);
+            if (open) setOpen(false);
+            else if (!disabled) openCalendar();
           }}
           disabled={disabled}
           aria-label="Toggle calendar"
@@ -254,12 +296,14 @@ export function DateInput({
         </button>
       </div>
 
-      {/* Pure React Custom Calendar Popover (Zero Native mm/dd/yyyy) */}
-      {open && (
+      {/* Render at page level so parent cards and scroll containers cannot clip it. */}
+      {open && typeof document !== "undefined" && createPortal(
         <div
+          ref={popoverRef}
           role="dialog"
           aria-label="Date Picker"
-          className="absolute top-full left-0 z-50 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl animate-in fade-in-0 zoom-in-95"
+          style={popoverPosition}
+          className="fixed z-[100] w-72 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl animate-in fade-in-0 zoom-in-95"
         >
           {/* Calendar Header: Month/Year Dropdowns + Arrows */}
           <div className="flex items-center justify-between gap-1 mb-3">
@@ -388,7 +432,7 @@ export function DateInput({
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

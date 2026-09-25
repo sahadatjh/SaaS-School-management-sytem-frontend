@@ -6,6 +6,7 @@ import { ChevronLeft, Loader2, Save, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
@@ -193,7 +194,6 @@ export default function NewStudentPage() {
     if (!form.enrollment.section_id) e.section_id = requiredMessage;
     if (!form.enrollment.shift_id) e.shift_id = requiredMessage;
     if (!form.enrollment.medium) e.medium = requiredMessage;
-    if (!form.enrollment.group_id) e.group_id = requiredMessage;
     if (!form.name_english.trim()) e.name_english = requiredMessage;
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -278,7 +278,7 @@ export default function NewStudentPage() {
           <option value="Bangla">Bangla</option>
           <option value="English">English</option>
         </Select>
-        <Select id="group_id" label="Group" required error={errors.group_id} value={form.enrollment.group_id ?? ""} onChange={(v) => setEnr("group_id", v)} disabled={!groups.length}>
+        <Select id="group_id" label="Group" value={form.enrollment.group_id ?? ""} onChange={(v) => setEnr("group_id", v || undefined)} disabled={!groups.length}>
           <option value="">Select…</option>
           {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </Select>
@@ -303,14 +303,20 @@ export default function NewStudentPage() {
           <option value="applicant">Applicant</option>
           <option value="inactive">Inactive</option>
         </Select>
-        <Field id="admission_date" label="Admission Date" type="date" value={form.admission_date ?? ""} onChange={(v) => set("admission_date", v)} />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="admission_date" className="text-xs font-medium text-slate-700">Admission Date</label>
+          <DateInput id="admission_date" value={form.admission_date ?? ""} onChange={(v) => set("admission_date", v)} />
+        </div>
       </SectionCard>
 
       {/* ── 2. Personal Information ── */}
       <SectionCard title="Personal Information">
         <Field id="name_english" label="Full Name (English)" required error={errors.name_english} value={form.name_english} onChange={(v) => set("name_english", v)} placeholder="e.g. Rahim Uddin Ahmed" />
         <Field id="name_bangla" label="Full Name (Bangla)" value={form.name_bangla ?? ""} onChange={(v) => set("name_bangla", v)} placeholder="বাংলায় নাম" />
-        <Field id="date_of_birth" label="Date of Birth" type="date" value={form.date_of_birth} onChange={(v) => set("date_of_birth", v)} />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="date_of_birth" className="text-xs font-medium text-slate-700">Date of Birth</label>
+          <DateInput id="date_of_birth" value={form.date_of_birth} onChange={(v) => set("date_of_birth", v)} />
+        </div>
         <Select id="gender" label="Gender" value={form.gender} onChange={(v) => set("gender", v)}>
           <option value="">Select…</option>
           <option value="male">Male</option>

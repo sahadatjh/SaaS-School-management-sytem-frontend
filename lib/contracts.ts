@@ -33,6 +33,11 @@ export type InstitutionProfile = {
   timezone: string;
   branding?: { primaryColor?: string } | null;
   logoUrl?: string | null;
+  logo?: {
+    url: string;
+    path: string;
+    extension: string;
+  } | null;
 };
 
 export type InstitutionProfilePayload = {
@@ -44,6 +49,28 @@ export type InstitutionProfilePayload = {
   website?: string | null;
   timezone?: string;
   branding?: { primaryColor?: string } | null;
+};
+
+export type InstitutionRole = {
+  id: string;
+  name: string;
+  isSystem: boolean;
+  isEditable: boolean;
+  assignedUserCount: number;
+  permissionCodes: string[];
+};
+
+export type PermissionCatalogItem = {
+  code: string;
+  module: string;
+  action: string;
+  displayName: string;
+};
+
+export type RoleUser = {
+  id: string;
+  email: string;
+  roles: Array<{ id: string; name: string; isSystem: boolean }>;
 };
 
 /* ------------------------------------------------------------------ */

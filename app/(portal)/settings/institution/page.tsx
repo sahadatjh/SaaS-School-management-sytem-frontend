@@ -208,8 +208,8 @@ export default function InstitutionProfilePage() {
                 )}
               </div>
               <div>
-                <h2 className="font-bold text-slate-950">School identity</h2>
-                <p className="text-sm text-slate-500">{profile?.name}</p>
+                <h2 className="font-bold text-slate-950">{profile?.name}({profile?.eiin})</h2>
+                <p className="text-sm text-slate-500">{profile?.address}</p>
               </div>
             </div>
             <input

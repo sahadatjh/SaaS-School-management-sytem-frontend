@@ -188,7 +188,7 @@ export const navigationItems: NavItem[] = [
     icon: Settings,
     children: [
       { id: "institution-profile", label: "Institution Profile", href: "/settings/institution" },
-      { id: "roles-permissions", label: "Roles & Permissions", href: "/settings/roles" },
+      { id: "roles-permissions", label: "Roles & Permissions", href: "/settings/roles", capability: "roles.manage" },
       { id: "system-logs", label: "System Logs", href: "/settings/logs" },
     ],
   },

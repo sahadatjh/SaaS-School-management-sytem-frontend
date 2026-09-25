@@ -12,6 +12,9 @@ import type {
   PortalProfile,
   InstitutionProfile,
   InstitutionProfilePayload,
+  InstitutionRole,
+  PermissionCatalogItem,
+  RoleUser,
   AcademicYear,
   AcademicYearPayload,
   Class,
@@ -195,6 +198,15 @@ export const portalApi = {
         },
       );
     },
+  },
+  roles: {
+    list: () => authenticatedRequest<InstitutionRole[]>("/roles"),
+    permissions: () => authenticatedRequest<PermissionCatalogItem[]>("/roles/permissions"),
+    create: (payload: { name: string; permissionCodes: string[] }) => authenticatedRequest<InstitutionRole>("/roles", { method: "POST", body: JSON.stringify(payload) }),
+    update: (id: string, payload: { name: string; permissionCodes: string[] }) => authenticatedRequest<InstitutionRole>(`/roles/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+    delete: (id: string) => authenticatedRequest<void>(`/roles/${id}`, { method: "DELETE" }),
+    users: (params: URLSearchParams) => authenticatedRequest<{ items: RoleUser[]; pagination: { page: number; limit: number; total: number } }>(`/roles/users?${params.toString()}`),
+    assign: (userId: string, roleIds: string[]) => authenticatedRequest<{ userId: string; roleIds: string[] }>(`/roles/users/${userId}/roles`, { method: "PUT", body: JSON.stringify({ roleIds }) }),
   },
   dashboard: () => authenticatedRequest<DashboardSummary>("/dashboard/summary"),
   async logout(): Promise<void> {

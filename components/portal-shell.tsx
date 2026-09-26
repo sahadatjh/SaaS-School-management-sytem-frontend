@@ -654,7 +654,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 aria-label="Open user menu"
-                className="size-10 rounded-full bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
+                className="size-10 overflow-hidden rounded-full border-2 border-orange-300 bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
               >
                 <UserAvatar
                   key={profile.user.avatar?.url ?? "fallback"}

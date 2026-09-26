@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  AlertCircle, Loader2, Pencil, Plus,
+  Loader2, Pencil, Plus,
   Search, Trash2, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,19 +25,17 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const sentinelRef = useRef<HTMLTableRowElement | null>(null);
   const { sortState, requestSort, search, setSearch, debouncedSearch } = useListQuery();
 
   const loadStudents = useCallback(async (nextPage = 1, append = false) => {
     setLoading(true);
-    setError(null);
+    if (!append) setStudents([]);
     try {
       const params = new URLSearchParams();
       if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
@@ -51,7 +49,7 @@ export default function StudentsPage() {
       setTotal(result.pagination.total);
       setPage(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load students.");
+      toast.error(err instanceof Error ? err.message : "Failed to load students.");
     } finally {
       setLoading(false);
     }
@@ -59,8 +57,8 @@ export default function StudentsPage() {
 
   // Reload on sort/search change
   useEffect(() => {
-    setStudents([]);
-    loadStudents(1, false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- starts the async student-list request.
+    void loadStudents(1, false);
   }, [loadStudents]);
 
   const hasMore = students.length < total;
@@ -82,7 +80,6 @@ export default function StudentsPage() {
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
     setIsDeleting(true);
-    setDeleteError(null);
     try {
       await portalApi.students.delete(deleteTarget.id);
       setStudents((prev) => prev.filter((s) => s.id !== deleteTarget.id));
@@ -90,7 +87,7 @@ export default function StudentsPage() {
       toast.success(`Student "${deleteTarget.name_english}" deleted.`);
       setDeleteTarget(null);
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete student.");
+      toast.error(err instanceof Error ? err.message : "Failed to delete student.");
     } finally {
       setIsDeleting(false);
     }
@@ -124,14 +121,6 @@ export default function StudentsPage() {
           </Button>
         </div>
       </div>
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
-        </div>
-      )}
 
       {/* Table */}
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
@@ -170,7 +159,7 @@ export default function StudentsPage() {
                       </td>
                       <td className="py-2.5 pr-3 text-slate-600">
                         {s.current_enrollment
-                          ? `${s.current_enrollment.class_name} / ${s.current_enrollment.section_name}`
+                          ? [s.current_enrollment.class_name, s.current_enrollment.section_name].filter(Boolean).join(" / ")
                           : <span className="italic text-slate-400">No enrollment</span>}
                       </td>
                       <td className="py-2.5 pr-3 text-slate-600">
@@ -192,7 +181,7 @@ export default function StudentsPage() {
                         </span>
                       </td>
                       <td className="py-2.5 pl-3 pr-4 text-right">
-                        <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex justify-end gap-1">
                           <ActionTooltip content="Edit">
                             <Button
                               asChild
@@ -252,7 +241,7 @@ export default function StudentsPage() {
       {/* Delete dialog */}
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(null); } }}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
         title="Delete student?"
         description={`This will permanently remove "${deleteTarget?.name_english}" and their enrollment records.`}
         confirmLabel="Delete"

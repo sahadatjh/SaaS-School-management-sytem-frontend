@@ -247,8 +247,8 @@ export type Enrollment = {
   academic_year_name: string;
   class_id: string;
   class_name: string;
-  section_id: string;
-  section_name: string;
+  section_id: string | null;
+  section_name: string | null;
   shift_id: string;
   shift_name: string;
   medium: string;
@@ -340,7 +340,7 @@ export type StudentPayload = Omit<Student,
   enrollment: {
     academic_year_id: string;
     class_id: string;
-    section_id: string;
+    section_id?: string;
     shift_id: string;
     medium: string;
     roll_no: number;
@@ -356,4 +356,3 @@ export type StudentListResponse = {
   items: Student[];
   pagination: { page: number; limit: number; total: number };
 };
-

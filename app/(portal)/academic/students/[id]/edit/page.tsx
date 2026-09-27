@@ -24,7 +24,7 @@ function studentToPayload(s: Student): StudentPayload {
       class_id: e?.class_id ?? "",
       section_id: e?.section_id ?? "",
       shift_id: e?.shift_id ?? "",
-      medium: e?.medium ?? "",
+      medium_id: e?.medium_id ?? "",
       roll_no: e?.roll_no ?? 0,
       group_id: e?.group_id ?? undefined,
       department_id: e?.department_id ?? undefined,

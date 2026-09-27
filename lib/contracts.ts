@@ -163,6 +163,9 @@ export type Shift = AcademicBase & {
   end_time?: string;
 };
 
+export type Medium = AcademicBase & { name: string };
+export type MediumPayload = { name: string; is_active?: boolean };
+
 export type ShiftPayload = {
   name: string;
   start_time?: string;
@@ -251,7 +254,8 @@ export type Enrollment = {
   section_name: string | null;
   shift_id: string;
   shift_name: string;
-  medium: string;
+  medium_id: string;
+  medium_name: string;
   group_id: string | null;
   group_name: string | null;
   department_id: string | null;
@@ -348,7 +352,7 @@ export type StudentPayload = Omit<
     class_id: string;
     section_id?: string;
     shift_id: string;
-    medium: string;
+    medium_id: string;
     roll_no: number;
     group_id?: string;
     department_id?: string;
@@ -375,7 +379,7 @@ export type PromotionTarget = {
   academic_year_id: string;
   class_id: string;
   shift_id: string;
-  medium: string;
+  medium_id: string;
   section_id?: string;
   group_id?: string;
   department_id?: string;
@@ -397,6 +401,8 @@ export type PromotionCandidate = {
   group_id: string | null;
   department_id: string | null;
   shift_id: string;
+  medium_id: string;
+  medium_name: string;
   roll_no: number | null;
 };
 export type PromotionPreview = {
@@ -444,7 +450,8 @@ export type EnrollmentHistory = {
   group_id: string | null;
   department_id: string | null;
   shift_id: string;
-  medium: string;
+  medium_id: string;
+  medium_name: string;
   roll_no: number | null;
   registration_no: string | null;
   status: string;

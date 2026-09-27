@@ -43,6 +43,8 @@ import type {
   PromotionStudent,
   PromotionTarget,
   EnrollmentHistory,
+  Medium,
+  MediumPayload,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
@@ -299,6 +301,7 @@ export const portalApi = {
   ),
   classes: crudResource<Class, ClassPayload>("/classes"),
   departments: crudResource<Department, DepartmentPayload>("/departments"),
+  mediums: crudResource<Medium, MediumPayload>("/mediums"),
   shifts: crudResource<Shift, ShiftPayload>("/shifts"),
   sections: crudResource<Section, SectionPayload>("/sections"),
   groups: crudResource<Group, GroupPayload>("/groups"),

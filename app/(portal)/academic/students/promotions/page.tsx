@@ -18,6 +18,7 @@ import type {
   PromotionPreview,
   PromotionStudent,
   PromotionTarget,
+  Medium,
   Section,
   Shift,
 } from "@/lib/contracts";
@@ -29,7 +30,7 @@ const blankTarget = (): PromotionTarget => ({
   academic_year_id: "",
   class_id: "",
   shift_id: "",
-  medium: "Bangla",
+  medium_id: "",
 });
 function Select({
   value,
@@ -61,6 +62,7 @@ export default function StudentPromotionsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [sourceSections, setSourceSections] = useState<Section[]>([]);
   const [sourceGroups, setSourceGroups] = useState<Group[]>([]);
+  const [mediums, setMediums] = useState<Medium[]>([]);
   const [source, setSource] = useState<PromotionFilters>({
     academic_year_id: "",
   });
@@ -90,12 +92,14 @@ export default function StudentPromotionsPage() {
       portalApi.classes.list(),
       portalApi.shifts.list(),
       portalApi.departments.list(),
+      portalApi.mediums.list(),
     ])
-      .then(([y, c, s, d]) => {
+      .then(([y, c, s, d, mediumRows]) => {
         setYears(y);
         setClasses(c);
         setShifts(s);
         setDepartments(d);
+        setMediums(mediumRows.filter((medium) => medium.is_active));
       })
       .catch(() => toast.error("Unable to load academic setup."));
   }, []);
@@ -190,6 +194,7 @@ export default function StudentPromotionsPage() {
       !target.academic_year_id ||
       !target.class_id ||
       !target.shift_id ||
+      !target.medium_id ||
       !selected.size
     ) {
       toast.error("Select target placement and at least one student.");
@@ -463,14 +468,18 @@ export default function StudentPromotionsPage() {
             ))}
           </Select>
           <Select
-            value={target.medium}
+            value={target.medium_id}
             onChange={(v) => {
-              setTarget({ ...target, medium: v });
+              setTarget({ ...target, medium_id: v });
               setPreview(null);
             }}
           >
-            <option value="Bangla">Bangla</option>
-            <option value="English">English</option>
+            <option value="">Target Medium / Version</option>
+            {mediums.map((medium) => (
+              <option key={medium.id} value={medium.id}>
+                {medium.name}
+              </option>
+            ))}
           </Select>
         </div>
       </Card>

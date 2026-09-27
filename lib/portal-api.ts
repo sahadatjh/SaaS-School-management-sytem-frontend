@@ -35,6 +35,14 @@ import type {
   Student,
   StudentPayload,
   StudentListResponse,
+  PromotionBatch,
+  PromotionBatchResult,
+  PromotionCandidate,
+  PromotionFilters,
+  PromotionPreview,
+  PromotionStudent,
+  PromotionTarget,
+  EnrollmentHistory,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
@@ -243,12 +251,33 @@ export const portalApi = {
   },
   roles: {
     list: () => authenticatedRequest<InstitutionRole[]>("/roles"),
-    permissions: () => authenticatedRequest<PermissionCatalogItem[]>("/roles/permissions"),
-    create: (payload: { name: string; permissionCodes: string[] }) => authenticatedRequest<InstitutionRole>("/roles", { method: "POST", body: JSON.stringify(payload) }),
-    update: (id: string, payload: { name: string; permissionCodes: string[] }) => authenticatedRequest<InstitutionRole>(`/roles/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
-    delete: (id: string) => authenticatedRequest<void>(`/roles/${id}`, { method: "DELETE" }),
-    users: (params: URLSearchParams) => authenticatedRequest<{ items: RoleUser[]; pagination: { page: number; limit: number; total: number } }>(`/roles/users?${params.toString()}`),
-    assign: (userId: string, roleIds: string[]) => authenticatedRequest<{ userId: string; roleIds: string[] }>(`/roles/users/${userId}/roles`, { method: "PUT", body: JSON.stringify({ roleIds }) }),
+    permissions: () =>
+      authenticatedRequest<PermissionCatalogItem[]>("/roles/permissions"),
+    create: (payload: { name: string; permissionCodes: string[] }) =>
+      authenticatedRequest<InstitutionRole>("/roles", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    update: (
+      id: string,
+      payload: { name: string; permissionCodes: string[] },
+    ) =>
+      authenticatedRequest<InstitutionRole>(`/roles/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    delete: (id: string) =>
+      authenticatedRequest<void>(`/roles/${id}`, { method: "DELETE" }),
+    users: (params: URLSearchParams) =>
+      authenticatedRequest<{
+        items: RoleUser[];
+        pagination: { page: number; limit: number; total: number };
+      }>(`/roles/users?${params.toString()}`),
+    assign: (userId: string, roleIds: string[]) =>
+      authenticatedRequest<{ userId: string; roleIds: string[] }>(
+        `/roles/users/${userId}/roles`,
+        { method: "PUT", body: JSON.stringify({ roleIds }) },
+      ),
   },
   dashboard: () => authenticatedRequest<DashboardSummary>("/dashboard/summary"),
   async logout(): Promise<void> {
@@ -281,9 +310,10 @@ export const portalApi = {
   /* Students */
   students: {
     list: (params: URLSearchParams) =>
-      authenticatedRequest<StudentListResponse>(`/students?${params.toString()}`),
-    get: (id: string) =>
-      authenticatedRequest<Student>(`/students/${id}`),
+      authenticatedRequest<StudentListResponse>(
+        `/students?${params.toString()}`,
+      ),
+    get: (id: string) => authenticatedRequest<Student>(`/students/${id}`),
     create: (payload: StudentPayload) =>
       authenticatedRequest<Student>("/students", {
         method: "POST",
@@ -299,5 +329,41 @@ export const portalApi = {
         method: "DELETE",
       }),
   },
+  studentPromotions: {
+    candidates: (params: URLSearchParams) =>
+      authenticatedRequest<{
+        items: PromotionCandidate[];
+        pagination: { page: number; limit: number; total: number };
+      }>(`/student-promotions/candidates?${params.toString()}`),
+    preview: (payload: {
+      source: PromotionFilters;
+      target: PromotionTarget;
+      students: PromotionStudent[];
+    }) =>
+      authenticatedRequest<PromotionPreview>("/student-promotions/preview", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    commit: (payload: {
+      source: PromotionFilters;
+      target: PromotionTarget;
+      students: PromotionStudent[];
+      idempotency_key: string;
+    }) =>
+      authenticatedRequest<PromotionBatch>("/student-promotions", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    get: (id: string, params = new URLSearchParams()) =>
+      authenticatedRequest<PromotionBatchResult>(
+        `/student-promotions/${id}?${params.toString()}`,
+      ),
+    history: (studentId: string, params = new URLSearchParams()) =>
+      authenticatedRequest<{
+        items: EnrollmentHistory[];
+        pagination: { page: number; limit: number; total: number };
+      }>(
+        `/student-promotions/students/${studentId}/history?${params.toString()}`,
+      ),
+  },
 };
-

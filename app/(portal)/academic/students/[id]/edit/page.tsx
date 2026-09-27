@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import StudentForm from "@/components/students/student-form";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
-import type { Student, StudentPayload } from "@/lib/contracts";
+import type {
+  EnrollmentHistory,
+  Student,
+  StudentPayload,
+} from "@/lib/contracts";
 
 /** Map the API Student + current_enrollment back into StudentPayload shape for the form. */
 function studentToPayload(s: Student): StudentPayload {
@@ -87,16 +92,31 @@ export default function EditStudentPage({
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<EnrollmentHistory[]>([]);
 
   useEffect(() => {
-    portalApi.students.get(id)
+    portalApi.students
+      .get(id)
       .then((s) => setStudent(s))
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load student."))
+      .catch((err) =>
+        setError(
+          err instanceof Error ? err.message : "Failed to load student.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    portalApi.studentPromotions
+      .history(id, new URLSearchParams({ page: "1", limit: "20" }))
+      .then((result) => setHistory(result.items))
+      .catch(() => undefined);
+  }, [id]);
+
   async function handleUpdate(payload: StudentPayload) {
-    await portalApi.students.update(id, payload);
+    const profile = { ...payload };
+    Reflect.deleteProperty(profile, "enrollment");
+    await portalApi.students.update(id, profile);
     toast.success("Student updated successfully.");
     router.push("/academic/students");
   }
@@ -131,7 +151,9 @@ export default function EditStudentPage({
         </Button>
         <div>
           <h1 className="text-base font-bold text-slate-900">Edit Student</h1>
-          <p className="text-xs text-slate-500">{student.name_english} — {student.student_id}</p>
+          <p className="text-xs text-slate-500">
+            {student.name_english} — {student.student_id}
+          </p>
         </div>
       </div>
 
@@ -139,7 +161,36 @@ export default function EditStudentPage({
         initialData={studentToPayload(student)}
         onSubmit={handleUpdate}
         submitLabel="Update Student"
+        showAcademicInformation={false}
       />
+      <Card className="space-y-2 p-4">
+        <div>
+          <h2 className="font-semibold text-slate-900">Enrollment history</h2>
+          <p className="text-xs text-slate-500">
+            Academic placement changes are recorded through promotion.
+          </p>
+        </div>
+        {history.length ? (
+          history.map((enrollment) => (
+            <div
+              key={enrollment.id}
+              className="border-t pt-2 text-sm text-slate-700"
+            >
+              <span className="font-medium">{enrollment.status}</span>
+              <span className="ml-2">Roll: {enrollment.roll_no ?? "—"}</span>
+              {enrollment.end_reason && (
+                <span className="ml-2 text-slate-500">
+                  {enrollment.end_reason}
+                </span>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-slate-500">
+            No enrollment history available.
+          </p>
+        )}
+      </Card>
     </div>
   );
 }

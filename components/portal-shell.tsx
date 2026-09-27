@@ -62,7 +62,7 @@ export const navigationItems: NavItem[] = [
     children: [
       { id: "all-students", label: "All Students", href: "/academic/students" },
       { id: "add-student", label: "Add Student", href: "/academic/students/new" },
-      { id: "student-promotion", label: "Student Promotion", href: "/students/promotion" },
+      { id: "student-promotion", label: "Student Promotion", href: "/academic/students/promotions", capability: "students.promote" },
       {
         id: "certificates",
         label: "Certificates",

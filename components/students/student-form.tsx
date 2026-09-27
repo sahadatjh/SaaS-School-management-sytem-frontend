@@ -129,6 +129,7 @@ export type StudentFormProps = {
   submitting?: boolean;
   /** Submit button label. Defaults to "Save Student". */
   submitLabel?: string;
+  showAcademicInformation?: boolean;
 };
 
 export default function StudentForm({
@@ -139,6 +140,7 @@ export default function StudentForm({
   onReset,
   submitting: externalSubmitting,
   submitLabel = "Save Student",
+  showAcademicInformation = true,
 }: StudentFormProps) {
   const [form, setForm] = useState<StudentPayload>(initialData ?? EMPTY_STUDENT_PAYLOAD);
   const [submitting, setSubmitting] = useState(false);
@@ -304,7 +306,7 @@ export default function StudentForm({
       </div>
 
       {/* ── 1. Academic Information ── */}
-      <SectionCard title="Academic Information">
+      {showAcademicInformation && <SectionCard title="Academic Information">
         <Select id="academic_year_id" label="Session / Year" required error={errors.academic_year_id} value={form.enrollment.academic_year_id} onChange={(v) => setEnr("academic_year_id", v)}>
           <option value="">Select…</option>
           {academicYears.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
@@ -355,7 +357,7 @@ export default function StudentForm({
           <label htmlFor="admission_date" className="text-xs font-medium text-slate-700">Admission Date</label>
           <DateInput id="admission_date" value={form.admission_date ?? ""} onChange={(v) => set("admission_date", v)} />
         </div>
-      </SectionCard>
+      </SectionCard>}
 
       {/* ── 2. Personal Information ── */}
       <SectionCard title="Personal Information">

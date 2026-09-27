@@ -1,4 +1,4 @@
-import { BloodGroup, Religion } from './enums';
+import { BloodGroup, Religion } from "./enums";
 
 /* ------------------------------------------------------------------ */
 /*  Shared API envelope                                                */
@@ -333,9 +333,15 @@ export type Student = {
   current_enrollment: Enrollment | null;
 };
 
-export type StudentPayload = Omit<Student,
-  'id' | 'institution_id' | 'student_id' | 'is_imported' |
-  'created_at' | 'updated_at' | 'current_enrollment'
+export type StudentPayload = Omit<
+  Student,
+  | "id"
+  | "institution_id"
+  | "student_id"
+  | "is_imported"
+  | "created_at"
+  | "updated_at"
+  | "current_enrollment"
 > & {
   enrollment: {
     academic_year_id: string;
@@ -355,4 +361,95 @@ export type StudentPayload = Omit<Student,
 export type StudentListResponse = {
   items: Student[];
   pagination: { page: number; limit: number; total: number };
+};
+
+export type PromotionFilters = {
+  academic_year_id: string;
+  class_id?: string;
+  section_id?: string;
+  group_id?: string;
+  department_id?: string;
+  shift_id?: string;
+};
+export type PromotionTarget = {
+  academic_year_id: string;
+  class_id: string;
+  shift_id: string;
+  medium: string;
+  section_id?: string;
+  group_id?: string;
+  department_id?: string;
+  roll_no?: number;
+  registration_no?: string;
+};
+export type PromotionStudent = {
+  student_id: string;
+  target_overrides?: Partial<PromotionTarget>;
+};
+export type PromotionCandidate = {
+  student_id: string;
+  enrollment_id: string;
+  student_code: string;
+  name_english: string;
+  name_bangla: string | null;
+  class_id: string;
+  section_id: string | null;
+  group_id: string | null;
+  department_id: string | null;
+  shift_id: string;
+  roll_no: number | null;
+};
+export type PromotionPreview = {
+  items: Array<{
+    student_id: string;
+    source_enrollment_id?: string;
+    status: "ready" | "invalid";
+    reason_code?: string;
+    reason_message?: string;
+    target: PromotionTarget;
+  }>;
+  ready_count: number;
+  invalid_count: number;
+};
+export type PromotionBatch = {
+  id: string;
+  status:
+    "queued" | "processing" | "completed" | "completed_with_errors" | "failed";
+  total_count: number;
+  succeeded_count: number;
+  failed_count: number;
+  skipped_count: number;
+};
+export type PromotionItem = {
+  id: string;
+  student_id: string;
+  status: "queued" | "processing" | "succeeded" | "failed" | "skipped";
+  reason_code: string | null;
+  reason_message: string | null;
+  target_enrollment_id: string | null;
+  target_overrides: Partial<PromotionTarget>;
+};
+export type PromotionBatchResult = {
+  batch: PromotionBatch;
+  items: {
+    items: PromotionItem[];
+    pagination: { page: number; limit: number; total: number };
+  };
+};
+export type EnrollmentHistory = {
+  id: string;
+  academic_year_id: string;
+  class_id: string;
+  section_id: string | null;
+  group_id: string | null;
+  department_id: string | null;
+  shift_id: string;
+  medium: string;
+  roll_no: number | null;
+  registration_no: string | null;
+  status: string;
+  previous_enrollment_id: string | null;
+  ended_at: string | null;
+  end_reason: string | null;
+  created_at: string;
 };

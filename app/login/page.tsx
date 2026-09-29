@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "@/components/ui/sonner";
+import { getAuthTokens } from "@/lib/auth-tokens";
 import { portalApi } from "@/lib/portal-api";
 
 export default function LoginPage() {
 	const router = useRouter();
 	const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
 	const [busy, setBusy] = useState(false);
+
+	useEffect(() => {
+		if (getAuthTokens()) router.replace("/dashboard");
+	}, [router]);
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();

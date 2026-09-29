@@ -300,14 +300,31 @@ export const navigationItems: NavItem[] = [
   },
 ];
 
-function isRouteActive(href?: string, currentPath = ""): boolean {
+function isRouteActive(
+  href?: string,
+  currentPath = "",
+  siblingItems: NavItem[] = [],
+): boolean {
   if (!href) return false;
   if (currentPath === href) return true;
   if (href === "/dashboard") return false;
 
   // For other routes, allow prefix matching (e.g. for /edit pages),
   // but exclude /new pages since they usually have their own sidebar item.
-  return currentPath.startsWith(href + "/") && !currentPath.endsWith("/new");
+  const isDescendant =
+    currentPath.startsWith(href + "/") && !currentPath.endsWith("/new");
+  if (!isDescendant) return false;
+
+  // Prefer a more specific sibling route when one matches the current path.
+  // This keeps "All Students" active for student detail/edit pages while
+  // allowing dedicated routes such as "Student Promotion" to own their state.
+  return !siblingItems.some(
+    (sibling) =>
+      sibling.href &&
+      sibling.href.length > href.length &&
+      (currentPath === sibling.href ||
+        currentPath.startsWith(sibling.href + "/")),
+  );
 }
 
 function hasActiveChild(item: NavItem, currentPath = ""): boolean {
@@ -511,6 +528,7 @@ function Navigation({
                               const nestedActive = isRouteActive(
                                 nested.href,
                                 pathname,
+                                subItem.children,
                               );
                               return (
                                 <Link
@@ -543,7 +561,11 @@ function Navigation({
                   }
 
                   // Normal Level 2 Link Item (e.g. All Students, Add Student, Academic Years, etc.)
-                  const subActive = isRouteActive(subItem.href, pathname);
+                  const subActive = isRouteActive(
+                    subItem.href,
+                    pathname,
+                    item.children,
+                  );
 
                   return (
                     <Link

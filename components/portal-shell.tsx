@@ -60,17 +60,37 @@ export const navigationItems: NavItem[] = [
     label: "Student Management",
     icon: Users,
     children: [
-      { id: "all-students", label: "All Students", href: "/students" },
-      { id: "add-student", label: "Add Student", href: "/students/new" },
-      { id: "admission", label: "Admission", href: "/students/admission" },
-      { id: "student-promotion", label: "Student Promotion", href: "/students/promotion" },
+      { id: "all-students", label: "All Students", href: "/academic/students" },
+      {
+        id: "add-student",
+        label: "Add Student",
+        href: "/academic/students/new",
+      },
+      {
+        id: "student-promotion",
+        label: "Student Promotion",
+        href: "/academic/students/promotions",
+        capability: "students.promote",
+      },
       {
         id: "certificates",
         label: "Certificates",
         children: [
-          { id: "transfer-cert", label: "Transfer Certificate", href: "/students/certificates/transfer" },
-          { id: "character-cert", label: "Character Certificate", href: "/students/certificates/character" },
-          { id: "appreciation-cert", label: "Appreciation Certificate", href: "/students/certificates/appreciation" },
+          {
+            id: "transfer-cert",
+            label: "Transfer Certificate",
+            href: "/students/certificates/transfer",
+          },
+          {
+            id: "character-cert",
+            label: "Character Certificate",
+            href: "/students/certificates/character",
+          },
+          {
+            id: "appreciation-cert",
+            label: "Appreciation Certificate",
+            href: "/students/certificates/appreciation",
+          },
         ],
       },
       { id: "id-cards", label: "ID Cards", href: "/students/id-cards" },
@@ -82,14 +102,27 @@ export const navigationItems: NavItem[] = [
     icon: BookOpen,
     capability: "academic.read",
     children: [
-      { id: "academic-years", label: "Academic Years", href: "/academic/years" },
+      {
+        id: "academic-years",
+        label: "Academic Years",
+        href: "/academic/years",
+      },
+      { id: "mediums", label: "Medium/Version", href: "/academic/mediums" },
       { id: "classes", label: "Classes", href: "/academic/classes" },
-      { id: "departments", label: "Departments", href: "/academic/departments" },
+      {
+        id: "departments",
+        label: "Departments",
+        href: "/academic/departments",
+      },
       { id: "groups", label: "Groups", href: "/academic/groups" },
       { id: "sections", label: "Sections", href: "/academic/sections" },
       { id: "shifts", label: "Shifts", href: "/academic/shifts" },
       { id: "subjects", label: "Subjects", href: "/academic/subjects" },
-      { id: "teacher-assignments", label: "Teacher Assignments", href: "/academic/teacher-assignments" },
+      {
+        id: "teacher-assignments",
+        label: "Teacher Assignments",
+        href: "/academic/teacher-assignments",
+      },
     ],
   },
   {
@@ -97,9 +130,21 @@ export const navigationItems: NavItem[] = [
     label: "Attendance",
     icon: ClipboardCheck,
     children: [
-      { id: "student-attendance", label: "Student Attendance", href: "/attendance/students" },
-      { id: "teacher-attendance", label: "Teacher Attendance", href: "/attendance/teachers" },
-      { id: "attendance-reports", label: "Attendance Reports", href: "/attendance/reports" },
+      {
+        id: "student-attendance",
+        label: "Student Attendance",
+        href: "/attendance/students",
+      },
+      {
+        id: "teacher-attendance",
+        label: "Teacher Attendance",
+        href: "/attendance/teachers",
+      },
+      {
+        id: "attendance-reports",
+        label: "Attendance Reports",
+        href: "/attendance/reports",
+      },
     ],
   },
   {
@@ -107,7 +152,11 @@ export const navigationItems: NavItem[] = [
     label: "Exam Management",
     icon: Award,
     children: [
-      { id: "exam-schedules", label: "Exam Schedules", href: "/exams/schedules" },
+      {
+        id: "exam-schedules",
+        label: "Exam Schedules",
+        href: "/exams/schedules",
+      },
       { id: "admit-cards", label: "Admit Cards", href: "/exams/admit-cards" },
       { id: "seat-plans", label: "Seat Plans", href: "/exams/seat-plans" },
     ],
@@ -118,8 +167,16 @@ export const navigationItems: NavItem[] = [
     icon: BarChart3,
     children: [
       { id: "marks-entry", label: "Marks Entry", href: "/results/marks-entry" },
-      { id: "tabulation-sheet", label: "Tabulation Sheet", href: "/results/tabulation" },
-      { id: "publish-results", label: "Publish Results", href: "/results/publish" },
+      {
+        id: "tabulation-sheet",
+        label: "Tabulation Sheet",
+        href: "/results/tabulation",
+      },
+      {
+        id: "publish-results",
+        label: "Publish Results",
+        href: "/results/publish",
+      },
     ],
   },
   {
@@ -127,7 +184,11 @@ export const navigationItems: NavItem[] = [
     label: "Fees & Accounts",
     icon: Wallet,
     children: [
-      { id: "fee-structures", label: "Fee Structures", href: "/fees/structures" },
+      {
+        id: "fee-structures",
+        label: "Fee Structures",
+        href: "/fees/structures",
+      },
       { id: "fee-collection", label: "Fee Collection", href: "/fees/collect" },
       { id: "invoices", label: "Invoices", href: "/fees/invoices" },
       { id: "due-reports", label: "Due Reports", href: "/fees/due" },
@@ -140,7 +201,11 @@ export const navigationItems: NavItem[] = [
     children: [
       { id: "all-teachers", label: "All Teachers", href: "/teachers" },
       { id: "add-teacher", label: "Add Teacher", href: "/teachers/new" },
-      { id: "teacher-routines", label: "Teacher Routines", href: "/teachers/routines" },
+      {
+        id: "teacher-routines",
+        label: "Teacher Routines",
+        href: "/teachers/routines",
+      },
     ],
   },
   {
@@ -149,8 +214,16 @@ export const navigationItems: NavItem[] = [
     icon: User,
     children: [
       { id: "all-employees", label: "All Employees", href: "/employees" },
-      { id: "designations", label: "Designations", href: "/employees/designations" },
-      { id: "leave-management", label: "Leave Management", href: "/employees/leaves" },
+      {
+        id: "designations",
+        label: "Designations",
+        href: "/employees/designations",
+      },
+      {
+        id: "leave-management",
+        label: "Leave Management",
+        href: "/employees/leaves",
+      },
     ],
   },
   {
@@ -159,7 +232,11 @@ export const navigationItems: NavItem[] = [
     icon: HeartHandshake,
     children: [
       { id: "all-guardians", label: "All Guardians", href: "/guardians" },
-      { id: "link-guardians", label: "Guardian Linking", href: "/guardians/link" },
+      {
+        id: "link-guardians",
+        label: "Guardian Linking",
+        href: "/guardians/link",
+      },
     ],
   },
   {
@@ -167,9 +244,17 @@ export const navigationItems: NavItem[] = [
     label: "Communication",
     icon: Bell,
     children: [
-      { id: "notice-board", label: "Notice Board", href: "/communication/notices" },
+      {
+        id: "notice-board",
+        label: "Notice Board",
+        href: "/communication/notices",
+      },
       { id: "send-sms", label: "SMS Broadcast", href: "/communication/sms" },
-      { id: "email-templates", label: "Email Notification", href: "/communication/emails" },
+      {
+        id: "email-templates",
+        label: "Email Notification",
+        href: "/communication/emails",
+      },
     ],
   },
   {
@@ -177,9 +262,21 @@ export const navigationItems: NavItem[] = [
     label: "Reports",
     icon: PieChart,
     children: [
-      { id: "academic-reports", label: "Academic Reports", href: "/reports/academic" },
-      { id: "attendance-summary", label: "Attendance Summary", href: "/reports/attendance" },
-      { id: "financial-reports", label: "Financial Reports", href: "/reports/financial" },
+      {
+        id: "academic-reports",
+        label: "Academic Reports",
+        href: "/reports/academic",
+      },
+      {
+        id: "attendance-summary",
+        label: "Attendance Summary",
+        href: "/reports/attendance",
+      },
+      {
+        id: "financial-reports",
+        label: "Financial Reports",
+        href: "/reports/financial",
+      },
     ],
   },
   {
@@ -187,8 +284,17 @@ export const navigationItems: NavItem[] = [
     label: "Settings",
     icon: Settings,
     children: [
-      { id: "institution-profile", label: "Institution Profile", href: "/settings/institution" },
-      { id: "roles-permissions", label: "Roles & Permissions", href: "/settings/roles" },
+      {
+        id: "institution-profile",
+        label: "Institution Profile",
+        href: "/settings/institution",
+      },
+      {
+        id: "roles-permissions",
+        label: "Roles & Permissions",
+        href: "/settings/roles",
+        capability: "roles.manage",
+      },
       { id: "system-logs", label: "System Logs", href: "/settings/logs" },
     ],
   },
@@ -196,10 +302,12 @@ export const navigationItems: NavItem[] = [
 
 function isRouteActive(href?: string, currentPath = ""): boolean {
   if (!href) return false;
-  if (href === "/dashboard") {
-    return currentPath === "/dashboard";
-  }
-  return currentPath === href || currentPath.startsWith(href + "/");
+  if (currentPath === href) return true;
+  if (href === "/dashboard") return false;
+
+  // For other routes, allow prefix matching (e.g. for /edit pages),
+  // but exclude /new pages since they usually have their own sidebar item.
+  return currentPath.startsWith(href + "/") && !currentPath.endsWith("/new");
 }
 
 function hasActiveChild(item: NavItem, currentPath = ""): boolean {
@@ -225,7 +333,9 @@ function Navigation({
     if (pathname === "/dashboard") return null;
     const activeItem = navigationItems.find(
       (item) =>
-        item.children && item.children.length > 0 && hasActiveChild(item, pathname),
+        item.children &&
+        item.children.length > 0 &&
+        hasActiveChild(item, pathname),
     );
     return activeItem ? activeItem.id : null;
   });
@@ -241,7 +351,9 @@ function Navigation({
 
     const activeItem = navigationItems.find(
       (item) =>
-        item.children && item.children.length > 0 && hasActiveChild(item, pathname),
+        item.children &&
+        item.children.length > 0 &&
+        hasActiveChild(item, pathname),
     );
     if (activeItem) {
       setOpenMenuId(activeItem.id);
@@ -340,8 +452,8 @@ function Navigation({
                   {item.label}
                 </span>
               </div>
-              {!collapsed && (
-                isOpen ? (
+              {!collapsed &&
+                (isOpen ? (
                   <ChevronDown
                     className={cn(
                       "size-4 shrink-0 transition-transform",
@@ -354,8 +466,7 @@ function Navigation({
                     className="size-4 shrink-0 text-slate-400"
                     aria-hidden="true"
                   />
-                )
-              )}
+                ))}
             </button>
 
             {/* Level 2 Submenu */}
@@ -419,7 +530,9 @@ function Navigation({
                                   {nestedActive && (
                                     <span className="w-1 h-3.5 bg-orange-600 rounded-full shrink-0" />
                                   )}
-                                  <span className="truncate">{nested.label}</span>
+                                  <span className="truncate">
+                                    {nested.label}
+                                  </span>
                                 </Link>
                               );
                             })}
@@ -459,6 +572,33 @@ function Navigation({
       })}
     </nav>
   );
+}
+
+function UserAvatar({
+  displayName,
+  email,
+  avatarUrl,
+}: {
+  displayName: string | null;
+  email: string;
+  avatarUrl?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const initial =
+    (displayName?.trim() || email.trim()).charAt(0).toUpperCase() || "U";
+  if (avatarUrl && !failed) {
+    return (
+      // The backend serves this uploaded asset from its public avatar path.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt=""
+        className="size-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return <span aria-hidden="true">{initial}</span>;
 }
 
 export function PortalShell({ children }: { children: React.ReactNode }) {
@@ -620,7 +760,11 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               className="absolute left-3 top-3 size-4 text-slate-400"
               aria-hidden="true"
             />
-            <Input placeholder="Search (coming soon)" disabled className="pl-9" />
+            <Input
+              placeholder="Search (coming soon)"
+              disabled
+              className="pl-9"
+            />
           </label>
 
           <Button variant="ghost" aria-label="Notifications">
@@ -629,11 +773,37 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" aria-label="Open user menu">
-                Account
+              <Button
+                variant="ghost"
+                aria-label="Open user menu"
+                className="size-10 overflow-hidden rounded-full border-2 border-orange-300 bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
+              >
+                <UserAvatar
+                  key={profile.user.avatar?.url ?? "fallback"}
+                  displayName={profile.user.displayName}
+                  email={profile.user.email}
+                  avatarUrl={profile.user.avatar?.url}
+                />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="z-50 mt-2 rounded-lg border bg-white p-1 shadow-lg">
+            <DropdownMenuContent className="z-50 mt-2 min-w-52 rounded-lg border bg-white p-1 shadow-lg">
+              <div className="border-b px-3 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {profile.user.displayName || profile.user.email}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {profile.user.email}
+                </p>
+              </div>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/settings/profile"
+                  className="mt-1 flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"
+                >
+                  <User className="size-4" />
+                  My Profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={signOut}
                 className="cursor-pointer rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"

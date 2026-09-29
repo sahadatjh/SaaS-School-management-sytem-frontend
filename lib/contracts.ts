@@ -1,3 +1,5 @@
+import { BloodGroup, Religion } from "./enums";
+
 /* ------------------------------------------------------------------ */
 /*  Shared API envelope                                                */
 /* ------------------------------------------------------------------ */
@@ -17,9 +19,74 @@ export type Institution = {
   logo_url?: string;
 };
 
+export type PortalAvatar = {
+  url: string;
+  path: string;
+  extension: string;
+};
+
+export type PortalUserProfile = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatar: PortalAvatar | null;
+};
+
 export type PortalProfile = {
   institution: Institution;
+  user: PortalUserProfile;
   permissions: string[];
+};
+
+export type InstitutionProfile = {
+  id: string;
+  name: string;
+  eiin?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  contactEmail?: string | null;
+  website?: string | null;
+  timezone: string;
+  branding?: { primaryColor?: string } | null;
+  logoUrl?: string | null;
+  logo?: {
+    url: string;
+    path: string;
+    extension: string;
+  } | null;
+};
+
+export type InstitutionProfilePayload = {
+  name?: string;
+  eiin?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  contactEmail?: string | null;
+  website?: string | null;
+  timezone?: string;
+  branding?: { primaryColor?: string } | null;
+};
+
+export type InstitutionRole = {
+  id: string;
+  name: string;
+  isSystem: boolean;
+  isEditable: boolean;
+  assignedUserCount: number;
+  permissionCodes: string[];
+};
+
+export type PermissionCatalogItem = {
+  code: string;
+  module: string;
+  action: string;
+  displayName: string;
+};
+
+export type RoleUser = {
+  id: string;
+  email: string;
+  roles: Array<{ id: string; name: string; isSystem: boolean }>;
 };
 
 /* ------------------------------------------------------------------ */
@@ -96,6 +163,9 @@ export type Shift = AcademicBase & {
   end_time?: string;
 };
 
+export type Medium = AcademicBase & { name: string };
+export type MediumPayload = { name: string; is_active?: boolean };
+
 export type ShiftPayload = {
   name: string;
   start_time?: string;
@@ -167,4 +237,226 @@ export type TeacherAssignmentPayload = {
   subject_id?: string;
   is_class_teacher?: boolean;
   is_active?: boolean;
+};
+
+/* ------------------------------------------------------------------ */
+/*  Students                                                           */
+/* ------------------------------------------------------------------ */
+export type Enrollment = {
+  id: string;
+  institution_id: string;
+  student_id: string;
+  academic_year_id: string;
+  academic_year_name: string;
+  class_id: string;
+  class_name: string;
+  section_id: string | null;
+  section_name: string | null;
+  shift_id: string;
+  shift_name: string;
+  medium_id: string;
+  medium_name: string;
+  group_id: string | null;
+  group_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  roll_no: number;
+  registration_no: string | null;
+  enrollment_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Student = {
+  id: string;
+  institution_id: string;
+  student_id: string;
+  name_english: string;
+  name_bangla: string | null;
+  date_of_birth: string;
+  gender: string;
+  blood_group: BloodGroup | null;
+  nationality: string | null;
+  religion: Religion | null;
+  photo_url: string | null;
+  admission_date: string | null;
+  is_imported: boolean;
+  status: string;
+
+  prev_school_name: string | null;
+  prev_class: string | null;
+  prev_section: string | null;
+  prev_roll: string | null;
+  prev_group: string | null;
+  prev_session: string | null;
+  tc_number: string | null;
+
+  present_village: string;
+  present_thana: string | null;
+  present_district: string | null;
+  present_division: string | null;
+  present_post_code: string | null;
+
+  permanent_village: string | null;
+  permanent_thana: string | null;
+  permanent_district: string | null;
+  permanent_division: string | null;
+  permanent_post_code: string | null;
+  is_same_address: boolean;
+
+  primary_sms_number: string;
+  secondary_sms_number: string | null;
+  sms_recipients: string[] | null;
+
+  parents_sms_number: string;
+  father_name_bangla: string | null;
+  father_name_english: string | null;
+  father_occupation: string | null;
+  father_occupation_details: string | null;
+  father_mobile: string | null;
+  father_nid: string | null;
+  father_annual_income: number | null;
+
+  mother_name_bangla: string | null;
+  mother_name_english: string | null;
+  mother_occupation: string | null;
+  mother_occupation_details: string | null;
+  mother_mobile: string | null;
+  mother_nid: string | null;
+  mother_annual_income: number | null;
+
+  local_guardian_name: string | null;
+  local_guardian_contact: string | null;
+
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Joined from enrollments on list/detail views
+  current_enrollment: Enrollment | null;
+};
+
+export type StudentPayload = Omit<
+  Student,
+  | "id"
+  | "institution_id"
+  | "student_id"
+  | "is_imported"
+  | "created_at"
+  | "updated_at"
+  | "current_enrollment"
+> & {
+  enrollment: {
+    academic_year_id: string;
+    class_id: string;
+    section_id?: string;
+    shift_id: string;
+    medium_id: string;
+    roll_no: number;
+    group_id?: string;
+    department_id?: string;
+    major_subject_group?: string;
+    year?: string;
+    registration_no?: string;
+  };
+};
+
+export type StudentListResponse = {
+  items: Student[];
+  pagination: { page: number; limit: number; total: number };
+};
+
+export type PromotionFilters = {
+  academic_year_id: string;
+  class_id?: string;
+  section_id?: string;
+  group_id?: string;
+  department_id?: string;
+  shift_id?: string;
+};
+export type PromotionTarget = {
+  academic_year_id: string;
+  class_id: string;
+  shift_id: string;
+  medium_id: string;
+  section_id?: string;
+  group_id?: string;
+  department_id?: string;
+  roll_no?: number;
+  registration_no?: string;
+};
+export type PromotionStudent = {
+  student_id: string;
+  target_overrides?: Partial<PromotionTarget>;
+};
+export type PromotionCandidate = {
+  student_id: string;
+  enrollment_id: string;
+  student_code: string;
+  name_english: string;
+  name_bangla: string | null;
+  class_id: string;
+  section_id: string | null;
+  group_id: string | null;
+  department_id: string | null;
+  shift_id: string;
+  medium_id: string;
+  medium_name: string;
+  roll_no: number | null;
+};
+export type PromotionPreview = {
+  items: Array<{
+    student_id: string;
+    source_enrollment_id?: string;
+    status: "ready" | "invalid";
+    reason_code?: string;
+    reason_message?: string;
+    target: PromotionTarget;
+  }>;
+  ready_count: number;
+  invalid_count: number;
+};
+export type PromotionBatch = {
+  id: string;
+  status:
+    "queued" | "processing" | "completed" | "completed_with_errors" | "failed";
+  total_count: number;
+  succeeded_count: number;
+  failed_count: number;
+  skipped_count: number;
+};
+export type PromotionItem = {
+  id: string;
+  student_id: string;
+  status: "queued" | "processing" | "succeeded" | "failed" | "skipped";
+  reason_code: string | null;
+  reason_message: string | null;
+  target_enrollment_id: string | null;
+  target_overrides: Partial<PromotionTarget>;
+};
+export type PromotionBatchResult = {
+  batch: PromotionBatch;
+  items: {
+    items: PromotionItem[];
+    pagination: { page: number; limit: number; total: number };
+  };
+};
+export type EnrollmentHistory = {
+  id: string;
+  academic_year_id: string;
+  class_id: string;
+  section_id: string | null;
+  group_id: string | null;
+  department_id: string | null;
+  shift_id: string;
+  medium_id: string;
+  medium_name: string;
+  roll_no: number | null;
+  registration_no: string | null;
+  status: string;
+  previous_enrollment_id: string | null;
+  ended_at: string | null;
+  end_reason: string | null;
+  created_at: string;
 };

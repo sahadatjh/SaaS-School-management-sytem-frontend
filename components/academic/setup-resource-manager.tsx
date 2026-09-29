@@ -15,12 +15,24 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { cn } from "@/lib/utils";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
-import type { Class, Group, Section, Shift, Subject } from "@/lib/contracts";
+import type {
+  Class,
+  Group,
+  Medium,
+  Section,
+  Shift,
+  Subject,
+} from "@/lib/contracts";
 
-type ResourceName = "shifts" | "classes" | "subjects" | "sections" | "groups";
-type RecordItem = Shift | Class | Subject | Section | Group;
+type ResourceName =
+  "mediums" | "shifts" | "classes" | "subjects" | "sections" | "groups";
+type RecordItem = Medium | Shift | Class | Subject | Section | Group;
 
-const labels: Record<ResourceName, { singular: string; plural: string; dependent?: boolean }> = {
+const labels: Record<
+  ResourceName,
+  { singular: string; plural: string; dependent?: boolean }
+> = {
+  mediums: { singular: "Medium/Version", plural: "Medium/Version" },
   shifts: { singular: "Shift", plural: "Shifts" },
   classes: { singular: "Class", plural: "Classes" },
   subjects: { singular: "Subject", plural: "Subjects" },
@@ -31,15 +43,18 @@ const labels: Record<ResourceName, { singular: string; plural: string; dependent
 export function SetupResourceManager({ resource }: { resource: ResourceName }) {
   const label = labels[resource];
   const api = portalApi[resource];
-  
-  const { sortState, requestSort, search, setSearch, debouncedSearch } = useListQuery();
-  
+
+  const { sortState, requestSort, search, setSearch, debouncedSearch } =
+    useListQuery();
+
   const [items, setItems] = useState<RecordItem[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
-  const [formTarget, setFormTarget] = useState<RecordItem | null | undefined>(undefined);
+  const [formTarget, setFormTarget] = useState<RecordItem | null | undefined>(
+    undefined,
+  );
   const [deleteTarget, setDeleteTarget] = useState<RecordItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [numericValue, setNumericValue] = useState("");
@@ -47,7 +62,7 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
   const [endTime, setEndTime] = useState("");
   const [classId, setClassId] = useState("");
   const [active, setActive] = useState(true);
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -59,54 +74,105 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
       if (sortState.sortBy) params.set("sort_by", sortState.sortBy);
       if (sortState.sortOrder) params.set("sort_order", sortState.sortOrder);
       if (debouncedSearch) params.set("search", debouncedSearch);
-      
+
       const [records, availableClasses] = await Promise.all([
         api.list(params) as Promise<RecordItem[]>,
-        label.dependent ? portalApi.classes.list() : Promise.resolve([] as Class[]),
+        label.dependent
+          ? portalApi.classes.list()
+          : Promise.resolve([] as Class[]),
       ]);
       setItems(records);
       setClasses(availableClasses.filter((item) => item.is_active));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : `Unable to load ${label.plural.toLowerCase()}.`);
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : `Unable to load ${label.plural.toLowerCase()}.`,
+      );
     } finally {
       setLoading(false);
     }
-  }, [api, label.dependent, label.plural, sortState.sortBy, sortState.sortOrder, debouncedSearch]);
+  }, [
+    api,
+    label.dependent,
+    label.plural,
+    sortState.sortBy,
+    sortState.sortOrder,
+    debouncedSearch,
+  ]);
 
-  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+  useEffect(() => {
+    void Promise.resolve().then(load);
+  }, [load]);
 
   const reset = () => {
-    setFormTarget(undefined); setName(""); setCode(""); setNumericValue(""); setStartTime(""); setEndTime(""); setClassId(""); setActive(true); setError("");
+    setFormTarget(undefined);
+    setName("");
+    setCode("");
+    setNumericValue("");
+    setStartTime("");
+    setEndTime("");
+    setClassId("");
+    setActive(true);
+    setError("");
   };
 
   const beginCreate = () => {
-    setName(""); setCode(""); setNumericValue(""); setStartTime(""); setEndTime(""); setClassId(""); setActive(true); setError(""); setFormTarget(null);
+    setName("");
+    setCode("");
+    setNumericValue("");
+    setStartTime("");
+    setEndTime("");
+    setClassId("");
+    setActive(true);
+    setError("");
+    setFormTarget(null);
   };
 
   const beginEdit = (item: RecordItem) => {
-    setFormTarget(item); setName(item.name); setActive(item.is_active);
-    setCode("code" in item ? item.code ?? "" : "");
-    setNumericValue("numeric_value" in item && item.numeric_value !== undefined && item.numeric_value !== null ? String(item.numeric_value) : "");
-    setStartTime("start_time" in item ? item.start_time ?? "" : ""); setEndTime("end_time" in item ? item.end_time ?? "" : "");
-    setClassId("class_id" in item ? item.class_id : ""); setError("");
+    setFormTarget(item);
+    setName(item.name);
+    setActive(item.is_active);
+    setCode("code" in item ? (item.code ?? "") : "");
+    setNumericValue(
+      "numeric_value" in item &&
+        item.numeric_value !== undefined &&
+        item.numeric_value !== null
+        ? String(item.numeric_value)
+        : "",
+    );
+    setStartTime("start_time" in item ? (item.start_time ?? "") : "");
+    setEndTime("end_time" in item ? (item.end_time ?? "") : "");
+    setClassId("class_id" in item ? item.class_id : "");
+    setError("");
   };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return setError(`${label.singular} name is required.`);
-    if (label.dependent && !classId) return setError("Choose an active class first.");
-    if (resource === "shifts" && startTime && endTime && startTime >= endTime) return setError("End time must be later than start time.");
-    
-    const payload: Record<string, unknown> = { name: name.trim(), is_active: active };
+    if (label.dependent && !classId)
+      return setError("Choose an active class first.");
+    if (resource === "shifts" && startTime && endTime && startTime >= endTime)
+      return setError("End time must be later than start time.");
+
+    const payload: Record<string, unknown> = {
+      name: name.trim(),
+      is_active: active,
+    };
     if (resource === "subjects" && code.trim()) payload.code = code.trim();
-    if (resource === "classes" && numericValue.trim()) payload.numeric_value = Number(numericValue);
-    if (resource === "shifts") { 
-      if (startTime) payload.start_time = startTime.length === 5 ? `${startTime}:00` : startTime; 
-      if (endTime) payload.end_time = endTime.length === 5 ? `${endTime}:00` : endTime; 
+    if (resource === "classes" && numericValue.trim())
+      payload.numeric_value = Number(numericValue);
+    if (resource === "shifts") {
+      if (startTime)
+        payload.start_time =
+          startTime.length === 5 ? `${startTime}:00` : startTime;
+      if (endTime)
+        payload.end_time = endTime.length === 5 ? `${endTime}:00` : endTime;
     }
     if (label.dependent) payload.class_id = classId;
-    
-    setSaving(true); setError("");
+
+    setSaving(true);
+    setError("");
     try {
       if (formTarget) {
         await api.update(formTarget.id, payload as never);
@@ -115,23 +181,44 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
         await api.create(payload as never);
         toast.success(`${label.singular} created successfully.`);
       }
-      reset(); await load();
+      reset();
+      await load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : `Unable to save ${label.singular.toLowerCase()}.`);
-      toast.error(cause instanceof Error ? cause.message : `Unable to save ${label.singular.toLowerCase()}.`);
-    } finally { setSaving(false); }
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : `Unable to save ${label.singular.toLowerCase()}.`,
+      );
+      toast.error(
+        cause instanceof Error
+          ? cause.message
+          : `Unable to save ${label.singular.toLowerCase()}.`,
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const remove = async (item: RecordItem, skipConfirmation = false): Promise<boolean> => {
-    if (!skipConfirmation && !window.confirm(`Delete ${item.name}? This cannot be undone.`)) return false;
-    try { 
-      await api.delete(item.id); 
+  const remove = async (
+    item: RecordItem,
+    skipConfirmation = false,
+  ): Promise<boolean> => {
+    if (
+      !skipConfirmation &&
+      !window.confirm(`Delete ${item.name}? This cannot be undone.`)
+    )
+      return false;
+    try {
+      await api.delete(item.id);
       toast.success(`${label.singular} deleted successfully.`);
-      await load(); 
+      await load();
       return true;
-    } catch (cause) { 
-      const msg = cause instanceof Error ? cause.message : `Unable to delete ${label.singular.toLowerCase()}.`;
-      setError(msg); 
+    } catch (cause) {
+      const msg =
+        cause instanceof Error
+          ? cause.message
+          : `Unable to delete ${label.singular.toLowerCase()}.`;
+      setError(msg);
       toast.error(msg);
       return false;
     }
@@ -147,7 +234,8 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
     }
   };
 
-  const className = (id: string) => classes.find((item) => item.id === id)?.name ?? "Class unavailable";
+  const className = (id: string) =>
+    classes.find((item) => item.id === id)?.name ?? "Class unavailable";
   const timeValue = (value: string) => value.slice(0, 5);
 
   return (
@@ -176,7 +264,12 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
               </button>
             )}
           </div>
-          <Button type="button" size="sm" onClick={beginCreate} className="h-9 shrink-0 bg-orange-600 text-xs hover:bg-orange-700">
+          <Button
+            type="button"
+            size="sm"
+            onClick={beginCreate}
+            className="h-9 shrink-0 bg-orange-600 text-xs hover:bg-orange-700"
+          >
             <Plus className="mr-1.5 size-3.5" />
             New {label.singular}
           </Button>
@@ -189,33 +282,79 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
             <table className="w-full text-left text-sm text-slate-600 border-collapse">
               <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_#e2e8f0]">
                 <tr>
-                  <SortableHeader columnKey="name" title="Name" sortState={sortState} onRequestSort={requestSort} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500" />
-                  {label.dependent && <SortableHeader columnKey="class_id" title="Class" sortState={sortState} onRequestSort={requestSort} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500" />}
-                  <SortableHeader columnKey="is_active" title="Status" sortState={sortState} onRequestSort={requestSort} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500" />
-                  <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                  <SortableHeader
+                    columnKey="name"
+                    title="Name"
+                    sortState={sortState}
+                    onRequestSort={requestSort}
+                    className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
+                  />
+                  {label.dependent && (
+                    <SortableHeader
+                      columnKey="class_id"
+                      title="Class"
+                      sortState={sortState}
+                      onRequestSort={requestSort}
+                      className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
+                    />
+                  )}
+                  <SortableHeader
+                    columnKey="is_active"
+                    title="Status"
+                    sortState={sortState}
+                    onRequestSort={requestSort}
+                    className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500"
+                  />
+                  <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
-                  <tr><td className="p-8 text-center" colSpan={4}><Loader2 className="mx-auto size-6 animate-spin text-slate-300" /></td></tr>
+                  <tr>
+                    <td className="p-8 text-center" colSpan={4}>
+                      <Loader2 className="mx-auto size-6 animate-spin text-slate-300" />
+                    </td>
+                  </tr>
                 ) : items.length ? (
                   items.map((item) => (
-                    <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="group hover:bg-slate-50/80 transition-colors"
+                    >
                       <td className="px-5 py-3">
-                        <p className="font-semibold text-slate-900">{item.name}</p>
-                        {"code" in item && item.code && <p className="text-xs text-slate-500">{item.code}</p>}
+                        <p className="font-semibold text-slate-900">
+                          {item.name}
+                        </p>
+                        {"code" in item && item.code && (
+                          <p className="text-xs text-slate-500">{item.code}</p>
+                        )}
                         {"start_time" in item && (
                           <p className="text-xs text-slate-500">
-                            {item.start_time && item.end_time ? `${timeValue(item.start_time)} – ${timeValue(item.end_time)}` : "No times set"}
+                            {item.start_time && item.end_time
+                              ? `${timeValue(item.start_time)} – ${timeValue(item.end_time)}`
+                              : "No times set"}
                           </p>
                         )}
                       </td>
-                      {label.dependent && <td className="px-5 py-3 text-slate-600">{"class_id" in item ? className(item.class_id) : "—"}</td>}
-                      <td className="px-5 py-3"><StatusBadge isActive={item.is_active} /></td>
+                      {label.dependent && (
+                        <td className="px-5 py-3 text-slate-600">
+                          {"class_id" in item ? className(item.class_id) : "—"}
+                        </td>
+                      )}
+                      <td className="px-5 py-3">
+                        <StatusBadge isActive={item.is_active} />
+                      </td>
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex gap-1 justify-end">
                           <ActionTooltip content="Edit">
-                            <Button size="icon" variant="ghost" className="size-7 text-slate-500 hover:text-orange-600 hover:bg-orange-50" onClick={() => beginEdit(item)}>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7 text-slate-500 hover:text-orange-600 hover:bg-orange-50"
+                              onClick={() => beginEdit(item)}
+                            >
                               <Pencil className="size-4" />
                             </Button>
                           </ActionTooltip>
@@ -224,7 +363,14 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
                               size="icon"
                               variant="ghost"
                               className="size-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50"
-                              onClick={() => resource === "groups" || resource === "shifts" || resource === "subjects" ? setDeleteTarget(item) : void remove(item)}
+                              onClick={() =>
+                                resource === "mediums" ||
+                                resource === "groups" ||
+                                resource === "shifts" ||
+                                resource === "subjects"
+                                  ? setDeleteTarget(item)
+                                  : void remove(item)
+                              }
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -234,13 +380,19 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
                     </tr>
                   ))
                 ) : (
-                  <tr><td className="p-12 text-center text-xs text-slate-500" colSpan={4}>No {label.plural.toLowerCase()} configured yet.</td></tr>
+                  <tr>
+                    <td
+                      className="p-12 text-center text-xs text-slate-500"
+                      colSpan={4}
+                    >
+                      No {label.plural.toLowerCase()} configured yet.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
         </Card>
-
       </div>
 
       <Dialog.Root
@@ -254,7 +406,9 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-2xl focus:outline-none animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <Dialog.Title className="text-base font-bold text-slate-950">
-                {formTarget ? `Edit ${label.singular}: ${formTarget.name}` : `New ${label.singular}`}
+                {formTarget
+                  ? `Edit ${label.singular}: ${formTarget.name}`
+                  : `New ${label.singular}`}
               </Dialog.Title>
               <Dialog.Close asChild>
                 <button
@@ -270,14 +424,21 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
 
             <div className="px-5 pb-5 pt-4">
               {label.dependent && !classes.length ? (
-                <p className="text-sm text-slate-600">Create an active class before adding {label.plural.toLowerCase()}.</p>
+                <p className="text-sm text-slate-600">
+                  Create an active class before adding{" "}
+                  {label.plural.toLowerCase()}.
+                </p>
               ) : (
                 <form className="space-y-4" onSubmit={submit}>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Name <span className="text-rose-500">*</span></label>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                      Name <span className="text-rose-500">*</span>
+                    </label>
                     <Input
                       className="h-10 text-sm"
-                      placeholder={resource === "subjects" ? "e.g. Mathematics" : undefined}
+                      placeholder={
+                        resource === "subjects" ? "e.g. Mathematics" : undefined
+                      }
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       disabled={saving}
@@ -287,50 +448,128 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
 
                   {resource === "subjects" && (
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Code <span className="font-normal normal-case text-slate-500">(optional)</span></label>
-                      <Input className="h-10 text-sm" value={code} onChange={(event) => setCode(event.target.value)} disabled={saving} />
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Code{" "}
+                        <span className="font-normal normal-case text-slate-500">
+                          (optional)
+                        </span>
+                      </label>
+                      <Input
+                        className="h-10 text-sm"
+                        value={code}
+                        onChange={(event) => setCode(event.target.value)}
+                        disabled={saving}
+                      />
                     </div>
                   )}
 
                   {resource === "shifts" && (
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Start time</label>
-                        <Input className="h-10 text-sm" type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} disabled={saving} />
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                          Start time
+                        </label>
+                        <Input
+                          className="h-10 text-sm"
+                          type="time"
+                          value={startTime}
+                          onChange={(event) => setStartTime(event.target.value)}
+                          disabled={saving}
+                        />
                       </div>
                       <div>
-                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">End time</label>
-                        <Input className="h-10 text-sm" type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} disabled={saving} />
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                          End time
+                        </label>
+                        <Input
+                          className="h-10 text-sm"
+                          type="time"
+                          value={endTime}
+                          onChange={(event) => setEndTime(event.target.value)}
+                          disabled={saving}
+                        />
                       </div>
                     </div>
                   )}
 
                   {label.dependent && (
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Class <span className="text-rose-500">*</span></label>
-                      <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-100" value={classId} onChange={(event) => setClassId(event.target.value)} disabled={saving} required>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Class <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-100"
+                        value={classId}
+                        onChange={(event) => setClassId(event.target.value)}
+                        disabled={saving}
+                        required
+                      >
                         <option value="">Choose a class</option>
-                        {classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        {classes.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/60 p-4">
-                    <span className="text-sm font-semibold text-slate-800">Status</span>
+                    <span className="text-sm font-semibold text-slate-800">
+                      Status
+                    </span>
                     <div className="flex shrink-0 items-center gap-2.5">
-                      <span className={cn("text-xs font-semibold", active ? "text-emerald-700" : "text-slate-500")}>
+                      <span
+                        className={cn(
+                          "text-xs font-semibold",
+                          active ? "text-emerald-700" : "text-slate-500",
+                        )}
+                      >
                         {active ? "Active" : "Inactive"}
                       </span>
-                      <Switch checked={active} onCheckedChange={setActive} disabled={saving} />
+                      <Switch
+                        checked={active}
+                        onCheckedChange={setActive}
+                        disabled={saving}
+                      />
                     </div>
                   </div>
 
-                  {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
+                  {error && (
+                    <p role="alert" className="text-sm text-rose-600">
+                      {error}
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-3">
-                    <Button type="button" variant="outline" size="sm" onClick={reset} disabled={saving}>Cancel</Button>
-                    <Button type="submit" size="sm" disabled={saving} className="bg-orange-600 hover:bg-orange-700">
-                      {saving ? <><Loader2 className="mr-1.5 size-3.5 animate-spin" />Saving...</> : <><Save className="mr-1.5 size-3.5" />{formTarget ? "Save Changes" : `Save ${label.singular}`}</>}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={reset}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={saving}
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-1.5 size-3.5" />
+                          {formTarget
+                            ? "Save Changes"
+                            : `Save ${label.singular}`}
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -340,7 +579,10 @@ export function SetupResourceManager({ resource }: { resource: ResourceName }) {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {(resource === "groups" || resource === "shifts" || resource === "subjects") && (
+      {(resource === "mediums" ||
+        resource === "groups" ||
+        resource === "shifts" ||
+        resource === "subjects") && (
         <ConfirmDialog
           open={Boolean(deleteTarget)}
           onOpenChange={(open) => {

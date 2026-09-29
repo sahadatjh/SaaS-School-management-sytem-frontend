@@ -2,6 +2,7 @@
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/sonner";
+import { PasswordInput } from "@/components/ui/password-input";
 import { platformApi } from "@/lib/platform-api";
 
 export default function PlatformLogin() {
@@ -80,10 +81,9 @@ export default function PlatformLogin() {
           <label htmlFor="platform-login-password" className="sr-only">
             Password
           </label>
-          <input
+          <PasswordInput
             id="platform-login-password"
             name="password"
-            type="password"
             placeholder="Password"
             autoComplete="current-password"
             disabled={busy}
@@ -92,7 +92,7 @@ export default function PlatformLogin() {
             onChange={() =>
               setFieldErrors((current) => ({ ...current, password: "" }))
             }
-            className="w-full rounded border p-2"
+            className="rounded border p-2"
           />
           {fieldErrors.password && (
             <p id="platform-login-password-error" role="alert" className="mt-1 text-sm text-red-600">

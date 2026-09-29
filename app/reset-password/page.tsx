@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { portalApi } from "@/lib/portal-api";
 
 export default function ResetPasswordPage() {
@@ -65,24 +65,24 @@ export default function ResetPasswordPage() {
           <form className="mt-6 space-y-5" onSubmit={submit}>
             <label className="block text-sm font-medium text-slate-800">
               New password
-              <Input
+              <PasswordInput
                 required
                 name="password"
-                type="password"
                 minLength={8}
                 autoComplete="new-password"
                 className="mt-2"
+                disabled={working}
               />
             </label>
             <label className="block text-sm font-medium text-slate-800">
               Confirm new password
-              <Input
+              <PasswordInput
                 required
                 name="confirmPassword"
-                type="password"
                 minLength={8}
                 autoComplete="new-password"
                 className="mt-2"
+                disabled={working}
               />
             </label>
             {error && (

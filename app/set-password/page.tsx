@@ -1,22 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import type { ApiEnvelope } from "@/lib/contracts";
 
 const base = (process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ?? "http://localhost:8000/api/v1").replace(/\/+$/, "");
 
 export default function SetPasswordPage() {
-  const [token, setToken] = useState("");
+  const [token] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : new URLSearchParams(window.location.search).get("token") ?? "",
+  );
   const [error, setError] = useState("");
   const [complete, setComplete] = useState(false);
   const [working, setWorking] = useState(false);
-
-  useEffect(() => {
-    setToken(new URLSearchParams(window.location.search).get("token") ?? "");
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +59,7 @@ export default function SetPasswordPage() {
           <form className="mt-6 space-y-5" onSubmit={submit}>
             <label className="block text-sm font-medium text-slate-800">
               New password
-              <Input required name="password" type="password" minLength={8} autoComplete="new-password" className="mt-2" />
+              <PasswordInput required name="password" minLength={8} autoComplete="new-password" className="mt-2" disabled={working} />
             </label>
             {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
             <Button className="w-full" disabled={working}>{working ? "Saving..." : "Set password"}</Button>

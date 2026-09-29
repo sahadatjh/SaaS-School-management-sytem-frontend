@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "@/components/ui/sonner";
 import { portalApi } from "@/lib/portal-api";
 
@@ -13,7 +13,6 @@ export default function LoginPage() {
 	const router = useRouter();
 	const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
 	const [busy, setBusy] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -86,32 +85,17 @@ export default function LoginPage() {
 
 					<label className="block text-sm font-medium text-slate-800">
 						Password
-						<div className="relative mt-2">
-							<Input
+						<div className="mt-2">
+							<PasswordInput
 								name="password"
-								type={showPassword ? "text" : "password"}
 								autoComplete="current-password"
-								className="pr-11"
+								disabled={busy}
 								aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
 								aria-invalid={Boolean(fieldErrors.password)}
 								onChange={() =>
 									setFieldErrors((current) => ({ ...current, password: "" }))
 								}
 							/>
-							<button
-								type="button"
-								onClick={() => setShowPassword((visible) => !visible)}
-								disabled={busy}
-								aria-label={showPassword ? "Hide password" : "Show password"}
-								aria-pressed={showPassword}
-								className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-lg text-slate-400 transition-colors hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-orange-500 disabled:pointer-events-none disabled:opacity-50"
-							>
-								{showPassword ? (
-									<EyeOff className="size-4" aria-hidden="true" />
-								) : (
-									<Eye className="size-4" aria-hidden="true" />
-								)}
-							</button>
 						</div>
 						{fieldErrors.password && (
 							<p id="login-password-error" role="alert" className="mt-1 text-sm text-red-600">

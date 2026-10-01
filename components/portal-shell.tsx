@@ -15,6 +15,7 @@ import {
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
+  LogOut,
   type LucideIcon,
   Menu,
   PieChart,
@@ -700,6 +701,27 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               </div>
               <ChevronRight className="size-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
             </div>
+            <Button
+              variant="ghost"
+              onClick={signOut}
+              className="mt-2 w-full justify-start gap-3 text-slate-600 bg-orange-50 text-orange-700"
+            >
+              <LogOut className="size-4" />
+              Log out
+            </Button>
+          </div>
+        )}
+        {collapsed && (
+          <div className="border-t border-slate-100 p-3 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              aria-label="Log out"
+              className="w-full text-slate-600 hover:bg-orange-50 hover:text-orange-700"
+            >
+              <LogOut className="size-5" />
+            </Button>
           </div>
         )}
       </aside>
@@ -762,6 +784,14 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                     </div>
                     <ChevronRight className="size-4 text-slate-400 shrink-0" />
                   </div>
+                  <Button
+                    variant="ghost"
+                    onClick={signOut}
+                    className="mt-2 w-full justify-start gap-3 text-slate-600 hover:bg-orange-50 hover:text-orange-700"
+                  >
+                    <LogOut className="size-4" />
+                    Log out
+                  </Button>
                 </div>
               </div>
             </SheetContent>

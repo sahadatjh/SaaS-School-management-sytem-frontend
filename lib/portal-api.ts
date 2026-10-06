@@ -34,6 +34,8 @@ import type {
   TeacherAssignmentPayload,
   Student,
   StudentPayload,
+  StudentPhotoField,
+  StudentPhotoFiles,
   StudentListResponse,
   PromotionBatch,
   PromotionBatchResult,
@@ -50,6 +52,25 @@ import type {
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ?? "http://localhost:8000/api/v1"
 ).replace(/\/+$/, "");
+
+function studentFormData(
+  payload: StudentPayload | Partial<StudentPayload>,
+  photos: StudentPhotoFiles = {},
+  removedPhotos: StudentPhotoField[] = [],
+) {
+  const form = new FormData();
+  form.append("payload", JSON.stringify(payload));
+  if (removedPhotos.length) form.append("remove_photos", JSON.stringify(removedPhotos));
+  const fieldNames: Record<StudentPhotoField, string> = {
+    photo_url: "student_photo",
+    father_photo_url: "father_photo",
+    mother_photo_url: "mother_photo",
+  };
+  (Object.entries(photos) as [StudentPhotoField, File][]).forEach(([field, file]) =>
+    form.append(fieldNames[field], file),
+  );
+  return form;
+}
 
 export class PortalApiError extends Error {
   constructor(
@@ -317,15 +338,28 @@ export const portalApi = {
         `/students?${params.toString()}`,
       ),
     get: (id: string) => authenticatedRequest<Student>(`/students/${id}`),
-    create: (payload: StudentPayload) =>
+    create: (
+      payload: StudentPayload,
+      photos: StudentPhotoFiles = {},
+      removedPhotos: StudentPhotoField[] = [],
+    ) =>
       authenticatedRequest<Student>("/students", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: Object.keys(photos).length || removedPhotos.length
+          ? studentFormData(payload, photos, removedPhotos)
+          : JSON.stringify(payload),
       }),
-    update: (id: string, payload: Partial<StudentPayload>) =>
+    update: (
+      id: string,
+      payload: Partial<StudentPayload>,
+      photos: StudentPhotoFiles = {},
+      removedPhotos: StudentPhotoField[] = [],
+    ) =>
       authenticatedRequest<Student>(`/students/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(payload),
+        body: Object.keys(photos).length || removedPhotos.length
+          ? studentFormData(payload, photos, removedPhotos)
+          : JSON.stringify(payload),
       }),
     delete: (id: string) =>
       authenticatedRequest<{ success: boolean }>(`/students/${id}`, {

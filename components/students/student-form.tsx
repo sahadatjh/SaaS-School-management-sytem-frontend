@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Save, RotateCcw, PlusCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import {
+  Camera,
+  Loader2,
+  Save,
+  RotateCcw,
+  PlusCircle,
+  Upload,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { portalApi } from "@/lib/portal-api";
+import styles from "./student-form.module.css";
 import type {
   AcademicYear,
   Class,
@@ -16,6 +26,8 @@ import type {
   Department,
   Medium,
   StudentPayload,
+  StudentPhotoField,
+  StudentPhotoFiles,
 } from "@/lib/contracts";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -39,7 +51,7 @@ function Select({
   error?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={id} className="text-xs font-medium text-slate-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -51,7 +63,7 @@ function Select({
         onChange={(e) => onChange(e.target.value)}
         aria-describedby={error ? `${id}-error` : undefined}
         aria-invalid={Boolean(error)}
-        className={`h-8 rounded-md border bg-white px-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${error ? "border-red-500 focus:ring-red-100" : "border-slate-200 focus:ring-slate-900/10"}`}
+        className={`h-8 w-full min-w-0 rounded-md border bg-white px-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${error ? "border-red-500 focus:ring-red-100" : "border-slate-200 focus:ring-slate-900/10"}`}
       >
         {children}
       </select>
@@ -73,6 +85,8 @@ function Field({
   onChange,
   placeholder,
   error,
+  maxLength,
+  disabled,
 }: {
   id: string;
   label: string;
@@ -82,9 +96,11 @@ function Field({
   onChange: (v: string) => void;
   placeholder?: string;
   error?: string;
+  maxLength?: number;
+  disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={id} className="text-xs font-medium text-slate-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -95,6 +111,8 @@ function Field({
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        maxLength={maxLength}
+        disabled={disabled}
         aria-describedby={error ? `${id}-error` : undefined}
         aria-invalid={Boolean(error)}
         className={`h-8 text-xs ${error ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
@@ -111,21 +129,127 @@ function Field({
 function SectionCard({
   title,
   children,
+  bodyClassName,
 }: {
   title: string;
   children: React.ReactNode;
+  bodyClassName?: string;
 }) {
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className={`${styles.section} overflow-hidden p-0`}>
       <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
         <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           {title}
         </h2>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
-        {children}
-      </div>
+      <div className={bodyClassName ?? styles.sectionGrid}>{children}</div>
     </Card>
+  );
+}
+
+function PhotoCard({
+  field,
+  label,
+  imageUrl,
+  previewUrl,
+  removed,
+  error,
+  embedded = false,
+  onSelect,
+  onRemove,
+}: {
+  field: StudentPhotoField;
+  label: string;
+  imageUrl?: string | null;
+  previewUrl?: string;
+  removed: boolean;
+  error?: string;
+  embedded?: boolean;
+  onSelect: (field: StudentPhotoField, file: File) => void;
+  onRemove: (field: StudentPhotoField) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = `${field}-upload`;
+  const visibleImage = removed ? null : (previewUrl ?? imageUrl);
+  return (
+    <div
+      className={`mx-auto w-full max-w-36 min-w-0 self-start text-center ${embedded ? "p-0" : "rounded-xl border border-slate-200 bg-white p-3"}`}
+    >
+      <p className="mb-2 text-xs font-semibold text-slate-700">{label}</p>
+      <div
+        className={`relative mx-auto flex aspect-[3/4] w-28 max-w-full items-center justify-center overflow-hidden rounded-xl border-2 bg-slate-50 ${visibleImage ? "border-slate-200" : "border-dashed border-blue-300"}`}
+      >
+        {visibleImage ? (
+          <Image
+            src={visibleImage}
+            alt={label}
+            fill
+            unoptimized
+            sizes="112px"
+            className="object-contain object-center"
+          />
+        ) : (
+          <div className="px-3 text-center text-slate-400">
+            <Camera className="mx-auto mb-2 h-6 w-6" />
+            <span className="text-xs font-medium">{label}</span>
+          </div>
+        )}
+      </div>
+      <p className="mt-2 text-[11px] leading-4 text-slate-500">
+        Max 2MB · JPG, PNG
+      </p>
+      <p className="text-[11px] leading-4 text-slate-400">
+        Recommended: 3×4 ratio
+      </p>
+      {error && (
+        <p
+          id={`${inputId}-error`}
+          role="alert"
+          className="mt-1 break-words text-xs text-rose-600"
+        >
+          {error}
+        </p>
+      )}
+      <input
+        ref={inputRef}
+        id={inputId}
+        className="sr-only"
+        type="file"
+        accept="image/jpeg,image/png"
+        aria-label={`Select ${label.toLowerCase()}`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        onChange={(event) => {
+          const selected = event.target.files?.[0];
+          if (selected) onSelect(field, selected);
+          event.currentTarget.value = "";
+        }}
+      />
+      <div className="mt-3 flex w-full flex-col gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="w-full min-w-0 gap-1 whitespace-nowrap px-2"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5 shrink-0" />
+          {visibleImage ? "Replace" : "Select Photo"}
+        </Button>
+        {visibleImage && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="w-full min-w-0 gap-1 whitespace-nowrap px-2 text-rose-600 hover:text-rose-700"
+            onClick={() => onRemove(field)}
+          >
+            <X className="h-3.5 w-3.5 shrink-0" />
+            Remove
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -147,10 +271,12 @@ export const EMPTY_STUDENT_PAYLOAD: StudentPayload = {
   gender: "",
   status: "active",
   blood_group: null,
-  nationality: "",
+  nationality: "Bangladeshi",
   religion: null,
   admission_date: "",
   photo_url: "",
+  father_photo_url: "",
+  mother_photo_url: "",
   // Previous school
   prev_school_name: "",
   prev_class: "",
@@ -175,7 +301,6 @@ export const EMPTY_STUDENT_PAYLOAD: StudentPayload = {
   primary_sms_number: "",
   secondary_sms_number: "",
   sms_recipients: [],
-  parents_sms_number: "",
   // Father
   father_name_bangla: "",
   father_name_english: "",
@@ -194,6 +319,7 @@ export const EMPTY_STUDENT_PAYLOAD: StudentPayload = {
   mother_annual_income: null,
   // Guardian
   local_guardian_name: "",
+  local_guardian_relationship: "",
   local_guardian_contact: "",
   remarks: "",
 };
@@ -206,6 +332,8 @@ export type StudentFormProps = {
   onSubmit: (
     payload: StudentPayload,
     action: "save" | "save-and-add",
+    photos: StudentPhotoFiles,
+    removedPhotos: StudentPhotoField[],
   ) => Promise<void>;
   /** Show "Save & Add Another" button (only for create mode). */
   showSaveAndAdd?: boolean;
@@ -238,6 +366,11 @@ export default function StudentForm({
   const [submitAction, setSubmitAction] = useState<"save" | "save-and-add">(
     "save",
   );
+  const [photos, setPhotos] = useState<StudentPhotoFiles>({});
+  const [photoPreviews, setPhotoPreviews] = useState<
+    Partial<Record<StudentPhotoField, string>>
+  >({});
+  const [removedPhotos, setRemovedPhotos] = useState<StudentPhotoField[]>([]);
   const isSubmitting = externalSubmitting ?? submitting;
 
   useEffect(() => {
@@ -332,11 +465,18 @@ export default function StudentForm({
   function validate(): boolean {
     const e: Record<string, string> = {};
     const requiredMessage = "This field is required.";
-    if (!form.enrollment.academic_year_id) e.academic_year_id = requiredMessage;
-    if (!form.enrollment.class_id) e.class_id = requiredMessage;
-    if (!form.enrollment.shift_id) e.shift_id = requiredMessage;
-    if (!form.enrollment.medium_id) e.medium_id = requiredMessage;
+    if (showAcademicInformation) {
+      if (!form.enrollment.academic_year_id)
+        e.academic_year_id = requiredMessage;
+      if (!form.enrollment.class_id) e.class_id = requiredMessage;
+      if (!form.enrollment.shift_id) e.shift_id = requiredMessage;
+      if (!form.enrollment.medium_id) e.medium_id = requiredMessage;
+    }
     if (!form.name_english.trim()) e.name_english = requiredMessage;
+    if ((form.local_guardian_relationship ?? "").length > 255) {
+      e.local_guardian_relationship =
+        "Relationship must be 255 characters or fewer.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -359,9 +499,12 @@ export default function StudentForm({
       const payload = {
         ...withoutEmptyValues(form),
         enrollment,
+        local_guardian_relationship:
+          form.local_guardian_relationship?.trim() || null,
       } as StudentPayload;
+      Reflect.deleteProperty(payload, "parents_sms_number");
 
-      await onSubmit(payload, submitAction);
+      await onSubmit(payload, submitAction, photos, removedPhotos);
 
       if (submitAction === "save-and-add" && showSaveAndAdd) {
         setForm({
@@ -369,6 +512,10 @@ export default function StudentForm({
           enrollment: { ...form.enrollment, roll_no: 0, registration_no: "" },
         });
         setErrors({});
+        setPhotos({});
+        Object.values(photoPreviews).forEach((url) => URL.revokeObjectURL(url));
+        setPhotoPreviews({});
+        setRemovedPhotos([]);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } finally {
@@ -378,11 +525,58 @@ export default function StudentForm({
 
   function handleReset() {
     setForm(EMPTY_STUDENT_PAYLOAD);
+    setPhotos({});
+    Object.values(photoPreviews).forEach((url) => URL.revokeObjectURL(url));
+    setPhotoPreviews({});
+    setRemovedPhotos([]);
     setSections([]);
     setGroups([]);
     setErrors({});
     setSubmitAction("save");
     onReset?.();
+  }
+
+  function selectPhoto(field: StudentPhotoField, file: File) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      setErrors((current) => ({
+        ...current,
+        [field]: "Select a JPG or PNG image.",
+      }));
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors((current) => ({
+        ...current,
+        [field]: "Photo must be 2 MB or smaller.",
+      }));
+      return;
+    }
+    clearError(field);
+    setPhotos((current) => ({ ...current, [field]: file }));
+    setPhotoPreviews((current) => {
+      if (current[field]) URL.revokeObjectURL(current[field]);
+      return { ...current, [field]: URL.createObjectURL(file) };
+    });
+    setRemovedPhotos((current) => current.filter((value) => value !== field));
+  }
+
+  function removePhoto(field: StudentPhotoField) {
+    setPhotos((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setPhotoPreviews((current) => {
+      if (current[field]) URL.revokeObjectURL(current[field]);
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    if (initialData?.[field]) {
+      setRemovedPhotos((current) =>
+        current.includes(field) ? current : [...current, field],
+      );
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -433,243 +627,303 @@ export default function StudentForm({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit}
+      className={`${styles.form} flex flex-col gap-4`}
+    >
       {/* Top action bar */}
-      <div className="flex justify-end gap-2">{actionButtons}</div>
+      <div className={styles.actions}>{actionButtons}</div>
 
-      {/* ── 1. Academic Information ── */}
-      {showAcademicInformation && (
-        <SectionCard title="Academic Information">
-          <Select
-            id="academic_year_id"
-            label="Session / Year"
-            required
-            error={errors.academic_year_id}
-            value={form.enrollment.academic_year_id}
-            onChange={(v) => setEnr("academic_year_id", v)}
-          >
-            <option value="">Select…</option>
-            {academicYears.map((y) => (
-              <option key={y.id} value={y.id}>
-                {y.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="class_id"
-            label="Class"
-            required
-            error={errors.class_id}
-            value={form.enrollment.class_id}
-            onChange={(v) => {
-              setEnr("class_id", v);
-              setEnr("section_id", "");
-            }}
-          >
-            <option value="">Select…</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="section_id"
-            label="Section"
-            error={errors.section_id}
-            value={form.enrollment.section_id ?? ""}
-            onChange={(v) => setEnr("section_id", v || undefined)}
-            disabled={!form.enrollment.class_id}
-          >
-            <option value="">Select…</option>
-            {sections.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="shift_id"
-            label="Shift"
-            required
-            error={errors.shift_id}
-            value={form.enrollment.shift_id}
-            onChange={(v) => setEnr("shift_id", v)}
-          >
-            <option value="">Select…</option>
-            {shifts.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="medium_id"
-            label="Medium / Version"
-            required
-            error={errors.medium_id}
-            value={form.enrollment.medium_id}
-            onChange={(v) => setEnr("medium_id", v)}
-          >
-            <option value="">Select…</option>
-            {mediums.map((medium) => (
-              <option key={medium.id} value={medium.id}>
-                {medium.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="group_id"
-            label="Group"
-            value={form.enrollment.group_id ?? ""}
-            onChange={(v) => setEnr("group_id", v || undefined)}
-            disabled={!groups.length}
-          >
-            <option value="">Select…</option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            id="department_id"
-            label="Department"
-            value={form.enrollment.department_id ?? ""}
-            onChange={(v) => setEnr("department_id", v || undefined)}
-          >
-            <option value="">None</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </Select>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="roll_no"
-              className="text-xs font-medium text-slate-700"
-            >
-              Roll No
-            </label>
-            <Input
-              id="roll_no"
-              type="number"
-              min={1}
-              value={form.enrollment.roll_no || ""}
-              onChange={(e) => setEnr("roll_no", Number(e.target.value))}
-              className="h-8 text-xs"
-            />
+      {/* Student details share one continuous card. */}
+      <SectionCard
+        title="Student Information"
+        bodyClassName={styles.studentInformation}
+      >
+        <div className={styles.photoLayout}>
+          <PhotoCard
+            embedded
+            field="photo_url"
+            label="Student Photo"
+            imageUrl={form.photo_url}
+            previewUrl={photoPreviews.photo_url}
+            removed={removedPhotos.includes("photo_url")}
+            error={errors.photo_url}
+            onSelect={selectPhoto}
+            onRemove={removePhoto}
+          />
+          <div className={styles.personalFields}>
+            {showAcademicInformation && (
+              <>
+                <Select
+                  id="academic_year_id"
+                  label="Session / Year"
+                  required
+                  error={errors.academic_year_id}
+                  value={form.enrollment.academic_year_id}
+                  onChange={(v) => setEnr("academic_year_id", v)}
+                >
+                  <option value="">Select…</option>
+                  {academicYears.map((y) => (
+                    <option key={y.id} value={y.id}>
+                      {y.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="class_id"
+                  label="Class"
+                  required
+                  error={errors.class_id}
+                  value={form.enrollment.class_id}
+                  onChange={(v) => {
+                    setEnr("class_id", v);
+                    setEnr("section_id", "");
+                  }}
+                >
+                  <option value="">Select…</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="section_id"
+                  label="Section"
+                  error={errors.section_id}
+                  value={form.enrollment.section_id ?? ""}
+                  onChange={(v) => setEnr("section_id", v || undefined)}
+                  disabled={!form.enrollment.class_id}
+                >
+                  <option value="">Select…</option>
+                  {sections.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="shift_id"
+                  label="Shift"
+                  required
+                  error={errors.shift_id}
+                  value={form.enrollment.shift_id}
+                  onChange={(v) => setEnr("shift_id", v)}
+                >
+                  <option value="">Select…</option>
+                  {shifts.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="medium_id"
+                  label="Medium / Version"
+                  required
+                  error={errors.medium_id}
+                  value={form.enrollment.medium_id}
+                  onChange={(v) => setEnr("medium_id", v)}
+                >
+                  <option value="">Select…</option>
+                  {mediums.map((medium) => (
+                    <option key={medium.id} value={medium.id}>
+                      {medium.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="group_id"
+                  label="Group"
+                  value={form.enrollment.group_id ?? ""}
+                  onChange={(v) => setEnr("group_id", v || undefined)}
+                  disabled={!groups.length}
+                >
+                  <option value="">Select…</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="department_id"
+                  label="Department"
+                  value={form.enrollment.department_id ?? ""}
+                  onChange={(v) => setEnr("department_id", v || undefined)}
+                >
+                  <option value="">None</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Select>
+              </>
+            )}
+            <div>
+              <Select
+                id="gender"
+                label="Gender"
+                value={form.gender}
+                onChange={(v) => set("gender", v)}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </Select>
+            </div>
+            <div>
+              <Field
+                id="nationality"
+                label="Nationality"
+                value={form.nationality ?? "Bangladeshi"}
+                onChange={(v) => set("nationality", v)}
+              />
+            </div>
+            <div className={styles.wideField}>
+              <Field
+                id="name_bangla"
+                label="Student Full Name (Bangla)"
+                value={form.name_bangla ?? ""}
+                onChange={(v) => set("name_bangla", v)}
+                placeholder="বাংলায় নাম লিখুন"
+              />
+            </div>
+            <div className={styles.wideField}>
+              <Field
+                id="name_english"
+                label="Student Full Name (English)"
+                required
+                error={errors.name_english}
+                value={form.name_english}
+                onChange={(v) => set("name_english", v)}
+                placeholder="Name in English"
+              />
+            </div>
+            <div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="date_of_birth"
+                  className="text-xs font-medium text-slate-700"
+                >
+                  Date of Birth
+                </label>
+                <DateInput
+                  id="date_of_birth"
+                  value={form.date_of_birth}
+                  onChange={(v) => set("date_of_birth", v)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Select
+                id="blood_group"
+                label="Blood Group"
+                value={form.blood_group ?? ""}
+                onChange={(v) => set("blood_group", v || null)}
+              >
+                <option value="">Select</option>
+                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(
+                  (bg) => (
+                    <option key={bg}>{bg}</option>
+                  ),
+                )}
+              </Select>
+            </div>
+
+            <div>
+              <Select
+                id="religion"
+                label="Religion"
+                value={form.religion ?? ""}
+                onChange={(v) => set("religion", v || null)}
+              >
+                <option value="">Select religion</option>
+                <option>Islam</option>
+                <option>Hinduism</option>
+                <option>Buddhism</option>
+                <option>Christianity</option>
+                <option>Other</option>
+              </Select>
+            </div>
+            <div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="roll_no"
+                  className="text-xs font-medium text-slate-700"
+                >
+                  Roll No.
+                </label>
+                <Input
+                  id="roll_no"
+                  disabled={!showAcademicInformation}
+                  type="number"
+                  min={1}
+                  value={form.enrollment.roll_no || ""}
+                  onChange={(e) => setEnr("roll_no", Number(e.target.value))}
+                  placeholder="e.g. 01"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="admission_date"
+                className="text-xs font-medium text-slate-700"
+              >
+                Admission Date
+              </label>
+              <DateInput
+                id="admission_date"
+                value={form.admission_date ?? ""}
+                onChange={(v) => set("admission_date", v)}
+              />
+            </div>
+            <div className={styles.wideField}>
+              <Field
+                id="registration_no"
+                disabled={!showAcademicInformation}
+                label="Registration / Board Roll No."
+                value={form.enrollment.registration_no ?? ""}
+                onChange={(v) => setEnr("registration_no", v)}
+                placeholder="Board registration number"
+              />
+            </div>
+            <div className={styles.wideField}>
+              <Select
+                id="status"
+                label="Status"
+                value={form.status}
+                onChange={(v) => set("status", v)}
+              >
+                <option value="active">Active</option>
+                <option value="applicant">Applicant</option>
+                <option value="inactive">Inactive</option>
+              </Select>
+            </div>
           </div>
+        </div>
+        <div className={styles.informationFields}>
           <Field
-            id="registration_no"
-            label="Registration No"
-            value={form.enrollment.registration_no ?? ""}
-            onChange={(v) => setEnr("registration_no", v)}
+            id="primary_sms_number"
+            label="SMS Number"
+            value={form.primary_sms_number}
+            onChange={(v) => set("primary_sms_number", v)}
+            placeholder="01XXXXXXXXX"
+          />
+          <Field
+            id="secondary_sms_number"
+            label="Secondary SMS Number"
+            value={form.secondary_sms_number ?? ""}
+            onChange={(v) => set("secondary_sms_number", v)}
             placeholder="Optional"
           />
-          <Select
-            id="status"
-            label="Status"
-            value={form.status}
-            onChange={(v) => set("status", v)}
-          >
-            <option value="active">Active</option>
-            <option value="applicant">Applicant</option>
-            <option value="inactive">Inactive</option>
-          </Select>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="admission_date"
-              className="text-xs font-medium text-slate-700"
-            >
-              Admission Date
-            </label>
-            <DateInput
-              id="admission_date"
-              value={form.admission_date ?? ""}
-              onChange={(v) => set("admission_date", v)}
-            />
-          </div>
-        </SectionCard>
-      )}
-
-      {/* ── 2. Personal Information ── */}
-      <SectionCard title="Personal Information">
-        <Field
-          id="name_english"
-          label="Full Name (English)"
-          required
-          error={errors.name_english}
-          value={form.name_english}
-          onChange={(v) => set("name_english", v)}
-          placeholder="e.g. Rahim Uddin Ahmed"
-        />
-        <Field
-          id="name_bangla"
-          label="Full Name (Bangla)"
-          value={form.name_bangla ?? ""}
-          onChange={(v) => set("name_bangla", v)}
-          placeholder="বাংলায় নাম"
-        />
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="date_of_birth"
-            className="text-xs font-medium text-slate-700"
-          >
-            Date of Birth
-          </label>
-          <DateInput
-            id="date_of_birth"
-            value={form.date_of_birth}
-            onChange={(v) => set("date_of_birth", v)}
-          />
         </div>
-        <Select
-          id="gender"
-          label="Gender"
-          value={form.gender}
-          onChange={(v) => set("gender", v)}
-        >
-          <option value="">Select…</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-        </Select>
-        <Select
-          id="blood_group"
-          label="Blood Group"
-          value={form.blood_group ?? ""}
-          onChange={(v) => set("blood_group", v || null)}
-        >
-          <option value="">Select…</option>
-          {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => (
-            <option key={bg}>{bg}</option>
-          ))}
-        </Select>
-        <Field
-          id="nationality"
-          label="Nationality"
-          value={form.nationality ?? ""}
-          onChange={(v) => set("nationality", v)}
-          placeholder="Bangladeshi"
-        />
-        <Select
-          id="religion"
-          label="Religion"
-          value={form.religion ?? ""}
-          onChange={(v) => set("religion", v || null)}
-        >
-          <option value="">Select…</option>
-          <option>Islam</option>
-          <option>Hinduism</option>
-          <option>Buddhism</option>
-          <option>Christianity</option>
-          <option>Other</option>
-        </Select>
       </SectionCard>
 
-      {/* ── 3. Previous School ── */}
       <SectionCard title="Previous School Details">
         <Field
           id="prev_school_name"
@@ -715,253 +969,249 @@ export default function StudentForm({
         />
       </SectionCard>
 
-      {/* ── 4. Address ── */}
-      <Card className="overflow-hidden p-0">
-        <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Address Information
-          </h2>
+      <SectionCard
+        title="Address Information"
+        bodyClassName={`${styles.addressColumns} p-4`}
+      >
+        {/* Present */}
+        <div>
+          <p className="mb-3 text-xs font-semibold text-slate-700">
+            Present Address
+          </p>
+          <div className={styles.addressFields}>
+            <div className={styles.addressFullWidth}>
+              <Field
+                id="present_village"
+                label="Village / House / Road"
+                value={form.present_village}
+                onChange={(v) => set("present_village", v)}
+              />
+            </div>
+            <Field
+              id="present_thana"
+              label="Thana / Upazila"
+              value={form.present_thana ?? ""}
+              onChange={(v) => set("present_thana", v)}
+            />
+            <Field
+              id="present_district"
+              label="District"
+              value={form.present_district ?? ""}
+              onChange={(v) => set("present_district", v)}
+            />
+            <Field
+              id="present_division"
+              label="Division"
+              value={form.present_division ?? ""}
+              onChange={(v) => set("present_division", v)}
+            />
+            <Field
+              id="present_post_code"
+              label="Post Code"
+              value={form.present_post_code ?? ""}
+              onChange={(v) => set("present_post_code", v)}
+            />
+          </div>
         </div>
-        <div className="grid gap-4 p-4 lg:grid-cols-2">
-          {/* Present */}
-          <div>
-            <p className="mb-3 text-xs font-semibold text-slate-700">
-              Present Address
+        {/* Permanent */}
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-700">
+              Permanent Address
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Field
-                  id="present_village"
-                  label="Village / House / Road"
-                  value={form.present_village}
-                  onChange={(v) => set("present_village", v)}
-                />
-              </div>
-              <Field
-                id="present_thana"
-                label="Thana / Upazila"
-                value={form.present_thana ?? ""}
-                onChange={(v) => set("present_thana", v)}
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={form.is_same_address}
+                onChange={(e) => handleSameAddress(e.target.checked)}
+                className="h-3 w-3 rounded accent-slate-900"
               />
-              <Field
-                id="present_district"
-                label="District"
-                value={form.present_district ?? ""}
-                onChange={(v) => set("present_district", v)}
-              />
-              <Field
-                id="present_division"
-                label="Division"
-                value={form.present_division ?? ""}
-                onChange={(v) => set("present_division", v)}
-              />
-              <Field
-                id="present_post_code"
-                label="Post Code"
-                value={form.present_post_code ?? ""}
-                onChange={(v) => set("present_post_code", v)}
-              />
-            </div>
+              Same as present
+            </label>
           </div>
-          {/* Permanent */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-700">
-                Permanent Address
-              </p>
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={form.is_same_address}
-                  onChange={(e) => handleSameAddress(e.target.checked)}
-                  className="h-3 w-3 rounded accent-slate-900"
-                />
-                Same as present
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Field
-                  id="permanent_village"
-                  label="Village / House / Road"
-                  value={form.permanent_village ?? ""}
-                  onChange={(v) => set("permanent_village", v)}
-                />
-              </div>
+          <div className={styles.addressFields}>
+            <div className={styles.addressFullWidth}>
               <Field
-                id="permanent_thana"
-                label="Thana / Upazila"
-                value={form.permanent_thana ?? ""}
-                onChange={(v) => set("permanent_thana", v)}
-              />
-              <Field
-                id="permanent_district"
-                label="District"
-                value={form.permanent_district ?? ""}
-                onChange={(v) => set("permanent_district", v)}
-              />
-              <Field
-                id="permanent_division"
-                label="Division"
-                value={form.permanent_division ?? ""}
-                onChange={(v) => set("permanent_division", v)}
-              />
-              <Field
-                id="permanent_post_code"
-                label="Post Code"
-                value={form.permanent_post_code ?? ""}
-                onChange={(v) => set("permanent_post_code", v)}
+                id="permanent_village"
+                label="Village / House / Road"
+                value={form.permanent_village ?? ""}
+                onChange={(v) => set("permanent_village", v)}
               />
             </div>
+            <Field
+              id="permanent_thana"
+              label="Thana / Upazila"
+              value={form.permanent_thana ?? ""}
+              onChange={(v) => set("permanent_thana", v)}
+            />
+            <Field
+              id="permanent_district"
+              label="District"
+              value={form.permanent_district ?? ""}
+              onChange={(v) => set("permanent_district", v)}
+            />
+            <Field
+              id="permanent_division"
+              label="Division"
+              value={form.permanent_division ?? ""}
+              onChange={(v) => set("permanent_division", v)}
+            />
+            <Field
+              id="permanent_post_code"
+              label="Post Code"
+              value={form.permanent_post_code ?? ""}
+              onChange={(v) => set("permanent_post_code", v)}
+            />
           </div>
         </div>
-      </Card>
-
-      {/* ── 5. SMS & Notifications ── */}
-      <SectionCard title="SMS & Notification Numbers">
-        <Field
-          id="primary_sms_number"
-          label="Primary SMS Number"
-          value={form.primary_sms_number}
-          onChange={(v) => set("primary_sms_number", v)}
-          placeholder="01XXXXXXXXX"
-        />
-        <Field
-          id="secondary_sms_number"
-          label="Secondary SMS Number"
-          value={form.secondary_sms_number ?? ""}
-          onChange={(v) => set("secondary_sms_number", v)}
-          placeholder="Optional"
-        />
-        <Field
-          id="parents_sms_number"
-          label="Parents SMS Number"
-          value={form.parents_sms_number}
-          onChange={(v) => set("parents_sms_number", v)}
-          placeholder="01XXXXXXXXX"
-        />
       </SectionCard>
 
       {/* ── 6. Parents ── */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="overflow-hidden p-0">
+      <div className={styles.parentCards}>
+        <Card className={`${styles.parentCard} overflow-hidden p-0`}>
           <div className="border-b border-slate-100 bg-blue-50 px-4 py-2.5">
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-blue-600">
               Father
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 p-4">
-            <Field
-              id="father_name_english"
-              label="Name (English)"
-              value={form.father_name_english ?? ""}
-              onChange={(v) => set("father_name_english", v)}
+          <div className={`${styles.photoLayout} p-4`}>
+            <PhotoCard
+              embedded
+              field="father_photo_url"
+              label="Father Photo"
+              imageUrl={form.father_photo_url}
+              previewUrl={photoPreviews.father_photo_url}
+              removed={removedPhotos.includes("father_photo_url")}
+              error={errors.father_photo_url}
+              onSelect={selectPhoto}
+              onRemove={removePhoto}
             />
-            <Field
-              id="father_name_bangla"
-              label="Name (Bangla)"
-              value={form.father_name_bangla ?? ""}
-              onChange={(v) => set("father_name_bangla", v)}
-            />
-            <Field
-              id="father_occupation"
-              label="Occupation"
-              value={form.father_occupation ?? ""}
-              onChange={(v) => set("father_occupation", v)}
-            />
-            <Field
-              id="father_mobile"
-              label="Mobile"
-              value={form.father_mobile ?? ""}
-              onChange={(v) => set("father_mobile", v)}
-            />
-            <Field
-              id="father_nid"
-              label="NID"
-              value={form.father_nid ?? ""}
-              onChange={(v) => set("father_nid", v)}
-            />
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="father_annual_income"
-                className="text-xs font-medium text-slate-700"
-              >
-                Annual Income
-              </label>
-              <Input
-                id="father_annual_income"
-                type="number"
-                min={0}
-                value={form.father_annual_income ?? ""}
-                onChange={(e) =>
-                  set(
-                    "father_annual_income",
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-                className="h-8 text-xs"
+            <div className={styles.parentFields}>
+              <Field
+                id="father_name_english"
+                label="Name (English)"
+                value={form.father_name_english ?? ""}
+                onChange={(v) => set("father_name_english", v)}
               />
+              <Field
+                id="father_name_bangla"
+                label="Name (Bangla)"
+                value={form.father_name_bangla ?? ""}
+                onChange={(v) => set("father_name_bangla", v)}
+              />
+              <Field
+                id="father_occupation"
+                label="Occupation"
+                value={form.father_occupation ?? ""}
+                onChange={(v) => set("father_occupation", v)}
+              />
+              <Field
+                id="father_mobile"
+                label="Mobile"
+                value={form.father_mobile ?? ""}
+                onChange={(v) => set("father_mobile", v)}
+              />
+              <Field
+                id="father_nid"
+                label="NID"
+                value={form.father_nid ?? ""}
+                onChange={(v) => set("father_nid", v)}
+              />
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="father_annual_income"
+                  className="text-xs font-medium text-slate-700"
+                >
+                  Annual Income
+                </label>
+                <Input
+                  id="father_annual_income"
+                  type="number"
+                  min={0}
+                  value={form.father_annual_income ?? ""}
+                  onChange={(e) =>
+                    set(
+                      "father_annual_income",
+                      e.target.value ? Number(e.target.value) : undefined,
+                    )
+                  }
+                  className="h-8 text-xs"
+                />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="overflow-hidden p-0">
+        <Card className={`${styles.parentCard} overflow-hidden p-0`}>
           <div className="border-b border-slate-100 bg-pink-50 px-4 py-2.5">
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-pink-600">
               Mother
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 p-4">
-            <Field
-              id="mother_name_english"
-              label="Name (English)"
-              value={form.mother_name_english ?? ""}
-              onChange={(v) => set("mother_name_english", v)}
+          <div className={`${styles.photoLayout} p-4`}>
+            <PhotoCard
+              embedded
+              field="mother_photo_url"
+              label="Mother Photo"
+              imageUrl={form.mother_photo_url}
+              previewUrl={photoPreviews.mother_photo_url}
+              removed={removedPhotos.includes("mother_photo_url")}
+              error={errors.mother_photo_url}
+              onSelect={selectPhoto}
+              onRemove={removePhoto}
             />
-            <Field
-              id="mother_name_bangla"
-              label="Name (Bangla)"
-              value={form.mother_name_bangla ?? ""}
-              onChange={(v) => set("mother_name_bangla", v)}
-            />
-            <Field
-              id="mother_occupation"
-              label="Occupation"
-              value={form.mother_occupation ?? ""}
-              onChange={(v) => set("mother_occupation", v)}
-            />
-            <Field
-              id="mother_mobile"
-              label="Mobile"
-              value={form.mother_mobile ?? ""}
-              onChange={(v) => set("mother_mobile", v)}
-            />
-            <Field
-              id="mother_nid"
-              label="NID"
-              value={form.mother_nid ?? ""}
-              onChange={(v) => set("mother_nid", v)}
-            />
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="mother_annual_income"
-                className="text-xs font-medium text-slate-700"
-              >
-                Annual Income
-              </label>
-              <Input
-                id="mother_annual_income"
-                type="number"
-                min={0}
-                value={form.mother_annual_income ?? ""}
-                onChange={(e) =>
-                  set(
-                    "mother_annual_income",
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-                className="h-8 text-xs"
+            <div className={styles.parentFields}>
+              <Field
+                id="mother_name_english"
+                label="Name (English)"
+                value={form.mother_name_english ?? ""}
+                onChange={(v) => set("mother_name_english", v)}
               />
+              <Field
+                id="mother_name_bangla"
+                label="Name (Bangla)"
+                value={form.mother_name_bangla ?? ""}
+                onChange={(v) => set("mother_name_bangla", v)}
+              />
+              <Field
+                id="mother_occupation"
+                label="Occupation"
+                value={form.mother_occupation ?? ""}
+                onChange={(v) => set("mother_occupation", v)}
+              />
+              <Field
+                id="mother_mobile"
+                label="Mobile"
+                value={form.mother_mobile ?? ""}
+                onChange={(v) => set("mother_mobile", v)}
+              />
+              <Field
+                id="mother_nid"
+                label="NID"
+                value={form.mother_nid ?? ""}
+                onChange={(v) => set("mother_nid", v)}
+              />
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="mother_annual_income"
+                  className="text-xs font-medium text-slate-700"
+                >
+                  Annual Income
+                </label>
+                <Input
+                  id="mother_annual_income"
+                  type="number"
+                  min={0}
+                  value={form.mother_annual_income ?? ""}
+                  onChange={(e) =>
+                    set(
+                      "mother_annual_income",
+                      e.target.value ? Number(e.target.value) : undefined,
+                    )
+                  }
+                  className="h-8 text-xs"
+                />
+              </div>
             </div>
           </div>
         </Card>
@@ -974,6 +1224,15 @@ export default function StudentForm({
           label="Name"
           value={form.local_guardian_name ?? ""}
           onChange={(v) => set("local_guardian_name", v)}
+        />
+        <Field
+          id="local_guardian_relationship"
+          label="Relationship"
+          value={form.local_guardian_relationship ?? ""}
+          onChange={(v) => set("local_guardian_relationship", v)}
+          maxLength={255}
+          error={errors.local_guardian_relationship}
+          placeholder="e.g. Uncle"
         />
         <Field
           id="local_guardian_contact"
@@ -1004,7 +1263,7 @@ export default function StudentForm({
       </Card>
 
       {/* Bottom action bar */}
-      <div className="flex justify-end gap-2 pb-4">{actionButtons}</div>
+      <div className={`${styles.actions} pb-4`}>{actionButtons}</div>
     </form>
   );
 }

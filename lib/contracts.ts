@@ -280,6 +280,8 @@ export type Student = {
   nationality: string | null;
   religion: Religion | null;
   photo_url: string | null;
+  father_photo_url: string | null;
+  mother_photo_url: string | null;
   admission_date: string | null;
   is_imported: boolean;
   status: string;
@@ -327,6 +329,7 @@ export type Student = {
   mother_annual_income: number | null;
 
   local_guardian_name: string | null;
+  local_guardian_relationship: string | null;
   local_guardian_contact: string | null;
 
   remarks: string | null;
@@ -346,6 +349,7 @@ export type StudentPayload = Omit<
   | "created_at"
   | "updated_at"
   | "current_enrollment"
+  | "parents_sms_number"
 > & {
   enrollment: {
     academic_year_id: string;
@@ -361,6 +365,11 @@ export type StudentPayload = Omit<
     registration_no?: string;
   };
 };
+
+export type StudentPhotoField =
+  "photo_url" | "father_photo_url" | "mother_photo_url";
+
+export type StudentPhotoFiles = Partial<Record<StudentPhotoField, File>>;
 
 export type StudentListResponse = {
   items: Student[];

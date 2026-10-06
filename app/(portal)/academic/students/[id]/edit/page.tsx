@@ -40,6 +40,8 @@ function studentToPayload(s: Student): StudentPayload {
     religion: s.religion,
     admission_date: s.admission_date ?? "",
     photo_url: s.photo_url ?? "",
+    father_photo_url: s.father_photo_url ?? "",
+    mother_photo_url: s.mother_photo_url ?? "",
     prev_school_name: s.prev_school_name ?? "",
     prev_class: s.prev_class ?? "",
     prev_section: s.prev_section ?? "",
@@ -61,7 +63,6 @@ function studentToPayload(s: Student): StudentPayload {
     primary_sms_number: s.primary_sms_number,
     secondary_sms_number: s.secondary_sms_number ?? "",
     sms_recipients: s.sms_recipients ?? [],
-    parents_sms_number: s.parents_sms_number,
     father_name_bangla: s.father_name_bangla ?? "",
     father_name_english: s.father_name_english ?? "",
     father_occupation: s.father_occupation ?? "",
@@ -77,6 +78,7 @@ function studentToPayload(s: Student): StudentPayload {
     mother_nid: s.mother_nid ?? "",
     mother_annual_income: s.mother_annual_income,
     local_guardian_name: s.local_guardian_name ?? "",
+    local_guardian_relationship: s.local_guardian_relationship ?? "",
     local_guardian_contact: s.local_guardian_contact ?? "",
     remarks: s.remarks ?? "",
   };
@@ -113,10 +115,15 @@ export default function EditStudentPage({
       .catch(() => undefined);
   }, [id]);
 
-  async function handleUpdate(payload: StudentPayload) {
+  async function handleUpdate(
+    payload: StudentPayload,
+    _action: "save" | "save-and-add",
+    photos: import("@/lib/contracts").StudentPhotoFiles,
+    removedPhotos: import("@/lib/contracts").StudentPhotoField[],
+  ) {
     const profile = { ...payload };
     Reflect.deleteProperty(profile, "enrollment");
-    await portalApi.students.update(id, profile);
+    await portalApi.students.update(id, profile, photos, removedPhotos);
     toast.success("Student updated successfully.");
     router.push("/academic/students");
   }
@@ -141,7 +148,7 @@ export default function EditStudentPage({
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-4">
+    <div className="flex min-w-0 w-full flex-col gap-4 p-2 sm:p-4">
       {/* Page header */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
@@ -149,9 +156,9 @@ export default function EditStudentPage({
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-base font-bold text-slate-900">Edit Student</h1>
-          <p className="text-xs text-slate-500">
+          <p className="break-words text-xs text-slate-500">
             {student.name_english} — {student.student_id}
           </p>
         </div>

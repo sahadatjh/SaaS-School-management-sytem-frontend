@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import StudentForm, { EMPTY_STUDENT_PAYLOAD } from "@/components/students/student-form";
+import StudentForm, {
+  EMPTY_STUDENT_PAYLOAD,
+} from "@/components/students/student-form";
 import { usePortal } from "@/components/portal-context";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
@@ -14,19 +16,41 @@ import type { StudentPayload } from "@/lib/contracts";
 export default function NewStudentPage() {
   const { profile } = usePortal();
   if (!profile) return null;
-  return <NewStudentFormPage storagePrefix={`edu_student_form_${profile.institution.id}_${profile.user.id}`} />;
+  return (
+    <NewStudentFormPage
+      storagePrefix={`edu_student_form_${profile.institution.id}_${profile.user.id}`}
+    />
+  );
 }
 
-function restoreForm(draftStorageKey: string, academicStorageKey: string): StudentPayload {
+function restoreForm(
+  draftStorageKey: string,
+  academicStorageKey: string,
+): StudentPayload {
   try {
     const draft = localStorage.getItem(draftStorageKey);
     const academic = localStorage.getItem(academicStorageKey);
     if (draft) {
       const parsed = JSON.parse(draft) as StudentPayload;
-      return { ...EMPTY_STUDENT_PAYLOAD, ...parsed, enrollment: { ...EMPTY_STUDENT_PAYLOAD.enrollment, ...parsed.enrollment } };
+      // Legacy drafts must not reintroduce the retired parent SMS input.
+      Reflect.deleteProperty(parsed, "parents_sms_number");
+      return {
+        ...EMPTY_STUDENT_PAYLOAD,
+        ...parsed,
+        enrollment: {
+          ...EMPTY_STUDENT_PAYLOAD.enrollment,
+          ...parsed.enrollment,
+        },
+      };
     }
     if (academic) {
-      return { ...EMPTY_STUDENT_PAYLOAD, enrollment: { ...EMPTY_STUDENT_PAYLOAD.enrollment, ...JSON.parse(academic) } };
+      return {
+        ...EMPTY_STUDENT_PAYLOAD,
+        enrollment: {
+          ...EMPTY_STUDENT_PAYLOAD.enrollment,
+          ...JSON.parse(academic),
+        },
+      };
     }
   } catch (e) {
     console.error("Failed to restore student form", e);
@@ -38,13 +62,23 @@ function NewStudentFormPage({ storagePrefix }: { storagePrefix: string }) {
   const router = useRouter();
   const draftStorageKey = `${storagePrefix}_draft`;
   const academicStorageKey = `${storagePrefix}_academic`;
-  const [initialData] = useState<StudentPayload>(() => restoreForm(draftStorageKey, academicStorageKey));
+  const [initialData] = useState<StudentPayload>(() =>
+    restoreForm(draftStorageKey, academicStorageKey),
+  );
 
-  async function handleCreate(payload: StudentPayload, action: "save" | "save-and-add") {
-    await portalApi.students.create(payload);
+  async function handleCreate(
+    payload: StudentPayload,
+    action: "save" | "save-and-add",
+    photos: import("@/lib/contracts").StudentPhotoFiles,
+    removedPhotos: import("@/lib/contracts").StudentPhotoField[],
+  ) {
+    await portalApi.students.create(payload, photos, removedPhotos);
     try {
       localStorage.removeItem(draftStorageKey);
-      localStorage.setItem(academicStorageKey, JSON.stringify(payload.enrollment));
+      localStorage.setItem(
+        academicStorageKey,
+        JSON.stringify(payload.enrollment),
+      );
     } catch {
       // A successful admission should not depend on browser storage.
     }
@@ -67,7 +101,7 @@ function NewStudentFormPage({ storagePrefix }: { storagePrefix: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-4">
+    <div className="flex min-w-0 w-full flex-col gap-4 p-2 sm:p-4">
       {/* Page header */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>

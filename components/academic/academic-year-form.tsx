@@ -209,7 +209,7 @@ export function AcademicYearForm({
                 htmlFor="start-date"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5"
               >
-                Start Date (dd/mm/yyyy) <span className="text-rose-500">*</span>
+                Start Date (dd-mm-yyyy) <span className="text-rose-500">*</span>
               </label>
               <DateInput
                 id="start-date"
@@ -225,7 +225,7 @@ export function AcademicYearForm({
                 htmlFor="end-date"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5"
               >
-                End Date (dd/mm/yyyy) <span className="text-rose-500">*</span>
+                End Date (dd-mm-yyyy) <span className="text-rose-500">*</span>
               </label>
               <DateInput
                 id="end-date"

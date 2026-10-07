@@ -89,9 +89,9 @@ export default function NewInstitutionPage() {
               </label>
               <label className="block text-sm font-medium text-slate-800 lg:row-span-2">
                 Address <span className="font-normal text-slate-500">(optional)</span>
-                <textarea
+                <Input
                   name="address"
-                  className="mt-2 min-h-28 w-full rounded-md border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  className="block text-sm font-medium text-slate-800 lg:row-span-2"
                 />
               </label>
             </div>

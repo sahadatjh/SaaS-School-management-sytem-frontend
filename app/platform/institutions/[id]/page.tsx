@@ -5,7 +5,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/lib/date";
 import {
   platformApi,
   type InstituteAdmin,
@@ -18,6 +20,7 @@ export default function InstitutionDetailPage() {
   const [admins, setAdmins] = useState<InstituteAdmin[]>([]);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
+  const [statusConfirmationOpen, setStatusConfirmationOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -39,7 +42,7 @@ export default function InstitutionDetailPage() {
 
   async function changeStatus() {
     if (!institution) return;
-    if (!window.confirm(`${institution.is_active ? "Deactivate" : "Activate"} ${institution.name}?`)) return;
+    setStatusConfirmationOpen(false);
     setWorking(true);
     try {
       setInstitution(await platformApi.status(id, !institution.is_active));
@@ -112,7 +115,7 @@ export default function InstitutionDetailPage() {
           <h1 className="text-2xl font-bold text-slate-950">{institution.name}</h1>
           <p className="text-slate-600">{institution.subdomain} · {institution.timezone}</p>
         </div>
-        <Button variant={institution.is_active ? "destructive" : "default"} disabled={working} onClick={changeStatus}>
+        <Button variant={institution.is_active ? "destructive" : "default"} disabled={working} onClick={() => setStatusConfirmationOpen(true)}>
           {institution.is_active ? "Deactivate school" : "Activate school"}
         </Button>
       </div>
@@ -122,14 +125,14 @@ export default function InstitutionDetailPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatusCard label="Access status" value={institution.is_active ? "Active" : "Inactive"} />
         <StatusCard label="Trial status" value={institution.trialState.replace("_", " ")} />
-        <StatusCard label="Trial ends" value={institution.trial_ends_on ?? "—"} />
+        <StatusCard label="Trial ends" value={formatDate(institution.trial_ends_on)} />
       </div>
 
       <Card className="p-6">
         <h2 className="font-semibold text-slate-950">Institute Admins</h2>
-        <form onSubmit={createInstituteAdmin} className="mt-4 flex max-w-lg flex-col gap-3 sm:flex-row">
+        <form onSubmit={createInstituteAdmin} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <Input required name="email" type="email" placeholder="admin@school.edu" autoComplete="email" />
-          <Button disabled={working}>Create Institute Admin</Button>
+          <Button className="shrink-0 whitespace-nowrap" disabled={working}>Create Institute Admin</Button>
         </form>
         <p className="mt-3 text-sm text-slate-500">
           New users receive a secure password-setup email. Existing Edu Soft users receive school access by email.
@@ -171,9 +174,20 @@ export default function InstitutionDetailPage() {
         <h2 className="font-semibold text-slate-950">Change trial period</h2>
         <form onSubmit={changeTrial} className="mt-4 flex max-w-sm gap-3">
           <Input required name="trialDays" type="number" min="1" step="1" defaultValue="14" />
-          <Button disabled={working}>Update trial</Button>
+          <Button className="shrink-0 whitespace-nowrap" disabled={working}>Update trial</Button>
         </form>
       </Card>
+
+      <ConfirmDialog
+        open={statusConfirmationOpen}
+        onOpenChange={setStatusConfirmationOpen}
+        title={institution.is_active ? "Deactivate school?" : "Activate school?"}
+        description={`Are you sure you want to ${institution.is_active ? "deactivate" : "activate"} ${institution.name}?`}
+        confirmLabel={institution.is_active ? "Deactivate school" : "Activate school"}
+        variant={institution.is_active ? "destructive" : "default"}
+        isLoading={working}
+        onConfirm={changeStatus}
+      />
     </div>
   );
 }

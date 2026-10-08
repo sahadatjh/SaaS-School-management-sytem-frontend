@@ -328,6 +328,8 @@ export const EMPTY_STUDENT_PAYLOAD: StudentPayload = {
 export type StudentFormProps = {
   /** Pre-filled data for editing. When provided, the form is in edit mode. */
   initialData?: StudentPayload;
+  /** Values restored after Reset or Save & Add Another. */
+  resetData?: StudentPayload;
   /** Called when the form is submitted. Return a promise that resolves once saved. */
   onSubmit: (
     payload: StudentPayload,
@@ -346,10 +348,12 @@ export type StudentFormProps = {
   /** Submit button label. Defaults to "Save Student". */
   submitLabel?: string;
   showAcademicInformation?: boolean;
+  lockEnrollmentDetails?: boolean;
 };
 
 export default function StudentForm({
   initialData,
+  resetData,
   onSubmit,
   showSaveAndAdd = false,
   draftStorageKey,
@@ -357,6 +361,7 @@ export default function StudentForm({
   submitting: externalSubmitting,
   submitLabel = "Save Student",
   showAcademicInformation = true,
+  lockEnrollmentDetails,
 }: StudentFormProps) {
   const [form, setForm] = useState<StudentPayload>(
     initialData ?? EMPTY_STUDENT_PAYLOAD,
@@ -372,11 +377,16 @@ export default function StudentForm({
   >({});
   const [removedPhotos, setRemovedPhotos] = useState<StudentPhotoField[]>([]);
   const isSubmitting = externalSubmitting ?? submitting;
+  const enrollmentDetailsLocked =
+    lockEnrollmentDetails ?? !showAcademicInformation;
 
   useEffect(() => {
     if (!draftStorageKey) return;
     try {
-      if (JSON.stringify(form) === JSON.stringify(EMPTY_STUDENT_PAYLOAD)) {
+      if (
+        JSON.stringify(form) ===
+        JSON.stringify(resetData ?? EMPTY_STUDENT_PAYLOAD)
+      ) {
         localStorage.removeItem(draftStorageKey);
       } else {
         localStorage.setItem(draftStorageKey, JSON.stringify(form));
@@ -384,7 +394,7 @@ export default function StudentForm({
     } catch {
       // Storage may be unavailable; the form remains usable.
     }
-  }, [draftStorageKey, form]);
+  }, [draftStorageKey, form, resetData]);
 
   // Lookup data
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
@@ -397,6 +407,7 @@ export default function StudentForm({
 
   // Load setup data once
   useEffect(() => {
+    if (!showAcademicInformation) return;
     const p = new URLSearchParams({ limit: "100" });
     Promise.all([
       portalApi.academicYears.list(p),
@@ -411,18 +422,18 @@ export default function StudentForm({
       setDepartments(dep ?? []);
       setMediums((mediumRows ?? []).filter((medium) => medium.is_active));
     });
-  }, []);
+  }, [showAcademicInformation]);
 
   // Load sections when class changes
   useEffect(() => {
-    if (!form.enrollment.class_id) return;
+    if (!showAcademicInformation || !form.enrollment.class_id) return;
     const p = new URLSearchParams({
       limit: "100",
       class_id: form.enrollment.class_id,
     });
     portalApi.sections.list(p).then((r) => setSections(r ?? []));
     portalApi.groups.list(p).then((r) => setGroups(r ?? []));
-  }, [form.enrollment.class_id]);
+  }, [form.enrollment.class_id, showAcademicInformation]);
 
   function clearError(key: string) {
     setErrors((current) => {
@@ -507,10 +518,16 @@ export default function StudentForm({
       await onSubmit(payload, submitAction, photos, removedPhotos);
 
       if (submitAction === "save-and-add" && showSaveAndAdd) {
-        setForm({
-          ...EMPTY_STUDENT_PAYLOAD,
-          enrollment: { ...form.enrollment, roll_no: 0, registration_no: "" },
-        });
+        setForm(
+          resetData ?? {
+            ...EMPTY_STUDENT_PAYLOAD,
+            enrollment: {
+              ...form.enrollment,
+              roll_no: 0,
+              registration_no: "",
+            },
+          },
+        );
         setErrors({});
         setPhotos({});
         Object.values(photoPreviews).forEach((url) => URL.revokeObjectURL(url));
@@ -524,7 +541,7 @@ export default function StudentForm({
   }
 
   function handleReset() {
-    setForm(EMPTY_STUDENT_PAYLOAD);
+    setForm(resetData ?? EMPTY_STUDENT_PAYLOAD);
     setPhotos({});
     Object.values(photoPreviews).forEach((url) => URL.revokeObjectURL(url));
     setPhotoPreviews({});
@@ -761,7 +778,7 @@ export default function StudentForm({
                 </Select>
               </>
             )}
-            <div>
+            {/* <div>
               <Select
                 id="gender"
                 label="Gender"
@@ -781,7 +798,7 @@ export default function StudentForm({
                 value={form.nationality ?? "Bangladeshi"}
                 onChange={(v) => set("nationality", v)}
               />
-            </div>
+            </div> */}
             <div className={styles.wideField}>
               <Field
                 id="name_bangla"
@@ -859,7 +876,7 @@ export default function StudentForm({
                 </label>
                 <Input
                   id="roll_no"
-                  disabled={!showAcademicInformation}
+                  disabled={enrollmentDetailsLocked}
                   type="number"
                   min={1}
                   value={form.enrollment.roll_no || ""}
@@ -885,7 +902,7 @@ export default function StudentForm({
             <div className={styles.wideField}>
               <Field
                 id="registration_no"
-                disabled={!showAcademicInformation}
+                disabled={enrollmentDetailsLocked}
                 label="Registration / Board Roll No."
                 value={form.enrollment.registration_no ?? ""}
                 onChange={(v) => setEnr("registration_no", v)}

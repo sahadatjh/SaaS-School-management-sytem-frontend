@@ -1004,9 +1004,24 @@ export default function AddStudentPage() {
 
               {/* Present Address */}
               <fieldset>
-                <legend className="mb-3 text-sm font-bold text-slate-800">
-                  Present Address
-                </legend>
+                <div className="mb-3 flex items-center gap-4">
+                  <h2 className="text-sm font-bold text-slate-800">
+                    Present Address
+                  </h2>
+                  <label
+                    htmlFor="same-address"
+                    className="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-800 select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      id="same-address"
+                      checked={isSameAddress}
+                      onChange={(e) => setIsSameAddress(e.target.checked)}
+                      className="size-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                    />
+                    <span>Permanent address is same as present address</span>
+                  </label>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   <FormInput
                     label="Village/House"
@@ -1040,23 +1055,6 @@ export default function AddStudentPage() {
                   />
                 </div>
               </fieldset>
-
-              {/* Same address toggle */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="same-address"
-                  checked={isSameAddress}
-                  onChange={(e) => setIsSameAddress(e.target.checked)}
-                  className="size-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                <label
-                  htmlFor="same-address"
-                  className="text-xs font-medium text-slate-600"
-                >
-                  Permanent address is same as present address
-                </label>
-              </div>
 
               {/* Permanent Address */}
               {!isSameAddress && (

@@ -117,7 +117,7 @@ function FormSelect({
   disabled?: boolean;
 }) {
   return (
-    <div className="w-[300px] shrink-0">
+    <div className="w-full">
       <label className="mb-1 block text-xs font-semibold text-slate-700">
         {label}
       </label>
@@ -157,7 +157,7 @@ function FormInput({
   required?: boolean;
 }) {
   return (
-    <div className="w-[300px] shrink-0">
+    <div className="w-full">
       <label className="mb-1 block text-xs font-semibold text-slate-700">
         {label}
         {required && <span className="text-rose-500 ml-0.5">*</span>}
@@ -194,7 +194,7 @@ function ImageUpload({
   };
 
   return (
-    <div className="w-[300px] shrink-0">
+    <div className="w-full">
       <label className="mb-1 block text-xs font-semibold text-slate-700">
         {label}
       </label>
@@ -645,7 +645,7 @@ export default function AddStudentPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4 px-5 py-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3.5 px-5 py-5">
             <FormSelect
               label="Academic Year"
               value={step1.academic_year_id}
@@ -855,7 +855,7 @@ export default function AddStudentPage() {
                 {/* <legend className="mb-3 text-sm font-bold text-slate-800">
                   Personal Information
                 </legend> */}
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                   <FormInput
                     label="Full Name"
                     value={name}
@@ -1022,7 +1022,7 @@ export default function AddStudentPage() {
                     <span>Permanent address is same as present address</span>
                   </label>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                   <FormInput
                     label="Village/House"
                     value={presentVillage}
@@ -1062,7 +1062,7 @@ export default function AddStudentPage() {
                   <legend className="mb-3 text-sm font-bold text-slate-800">
                     Permanent Address
                   </legend>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                     <FormInput
                       label="Village/House"
                       value={permanentVillage}
@@ -1103,7 +1103,7 @@ export default function AddStudentPage() {
                 <legend className="mb-3 text-sm font-bold text-slate-800">
                   Previous School
                 </legend>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                   <FormInput
                     label="School Name"
                     value={prevSchoolName}
@@ -1170,7 +1170,7 @@ export default function AddStudentPage() {
                 <legend className="mb-3 text-sm font-bold text-slate-800">
                   Photos
                 </legend>
-                <div className="flex flex-wrap gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                   <ImageUpload
                     label="Student Photo"
                     image={studentImage}

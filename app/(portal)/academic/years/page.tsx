@@ -237,7 +237,7 @@ export default function AcademicYearsPage() {
           <EmptyState
             icon={Calendar}
             title="No academic years configured"
-            description="Create your first academic year to establish sessions, enroll students, and schedule classes."
+            description="Create your first academic year to establish sessions and schedule classes."
             action={
               <Button
                 size="sm"

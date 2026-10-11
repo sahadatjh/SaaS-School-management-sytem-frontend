@@ -56,47 +56,6 @@ export const navigationItems: NavItem[] = [
     capability: "academic.read",
   },
   {
-    id: "student-management",
-    label: "Student Management",
-    icon: Users,
-    children: [
-      { id: "all-students", label: "All Students", href: "/academic/students" },
-      {
-        id: "add-student",
-        label: "Add Student",
-        href: "/academic/students/new",
-      },
-      {
-        id: "student-promotion",
-        label: "Student Promotion",
-        href: "/academic/students/promotions",
-        capability: "students.promote",
-      },
-      {
-        id: "certificates",
-        label: "Certificates",
-        children: [
-          {
-            id: "transfer-cert",
-            label: "Transfer Certificate",
-            href: "/students/certificates/transfer",
-          },
-          {
-            id: "character-cert",
-            label: "Character Certificate",
-            href: "/students/certificates/character",
-          },
-          {
-            id: "appreciation-cert",
-            label: "Appreciation Certificate",
-            href: "/students/certificates/appreciation",
-          },
-        ],
-      },
-      { id: "id-cards", label: "ID Cards", href: "/students/id-cards" },
-    ],
-  },
-  {
     id: "academic-management",
     label: "Academic Management",
     icon: BookOpen,
@@ -126,15 +85,48 @@ export const navigationItems: NavItem[] = [
     ],
   },
   {
+    id: "student-management",
+    label: "Student Management",
+    icon: Users,
+    capability: "students.read",
+    children: [
+      {
+        id: "all-students",
+        label: "All Students",
+        href: "/students",
+      },
+      {
+        id: "add-student",
+        label: "Add Student",
+        href: "/students/new",
+      },
+      {
+        id: "student-promotion",
+        label: "Student Promossion",
+        href: "/students/promotion",
+      },
+      {
+        id: "import-students",
+        label: "Improt Students",
+        href: "/students/import",
+      },
+      {
+        id: "id-cards",
+        label: "ID Cards",
+        href: "/students/id-cards",
+      },
+      {
+        id: "transfer-certificates",
+        label: "Transfer Certificates",
+        href: "/students/transfer-certificates",
+      },
+    ],
+  },
+  {
     id: "attendance",
     label: "Attendance",
     icon: ClipboardCheck,
     children: [
-      {
-        id: "student-attendance",
-        label: "Student Attendance",
-        href: "/attendance/students",
-      },
       {
         id: "teacher-attendance",
         label: "Teacher Attendance",
@@ -423,7 +415,7 @@ function Navigation({
           );
         }
 
-        // Top level expandable folder (e.g. Student Management, Academic Management, etc.)
+        // Top-level expandable folder (e.g. Academic Management, Attendance).
         return (
           <div key={item.id} className="space-y-0.5">
             <button
@@ -542,7 +534,7 @@ function Navigation({
                     );
                   }
 
-                  // Normal Level 2 Link Item (e.g. All Students, Add Student, Academic Years, etc.)
+                  // Normal level-two link item (e.g. Academic Years or Classes).
                   const subActive = isRouteActive(subItem.href, pathname);
 
                   return (

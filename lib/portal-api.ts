@@ -32,45 +32,15 @@ import type {
   SubjectPayload,
   TeacherAssignment,
   TeacherAssignmentPayload,
-  Student,
-  StudentPayload,
-  StudentPhotoField,
-  StudentPhotoFiles,
-  StudentListResponse,
-  PromotionBatch,
-  PromotionBatchResult,
-  PromotionCandidate,
-  PromotionFilters,
-  PromotionPreview,
-  PromotionStudent,
-  PromotionTarget,
-  EnrollmentHistory,
   Medium,
   MediumPayload,
+  Student,
+  CreateStudentPayload,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ?? "http://localhost:8000/api/v1"
 ).replace(/\/+$/, "");
-
-function studentFormData(
-  payload: StudentPayload | Partial<StudentPayload>,
-  photos: StudentPhotoFiles = {},
-  removedPhotos: StudentPhotoField[] = [],
-) {
-  const form = new FormData();
-  form.append("payload", JSON.stringify(payload));
-  if (removedPhotos.length) form.append("remove_photos", JSON.stringify(removedPhotos));
-  const fieldNames: Record<StudentPhotoField, string> = {
-    photo_url: "student_photo",
-    father_photo_url: "father_photo",
-    mother_photo_url: "mother_photo",
-  };
-  (Object.entries(photos) as [StudentPhotoField, File][]).forEach(([field, file]) =>
-    form.append(fieldNames[field], file),
-  );
-  return form;
-}
 
 export class PortalApiError extends Error {
   constructor(
@@ -331,76 +301,30 @@ export const portalApi = {
     "/teacher-assignments",
   ),
 
-  /* Students */
+  /* Student resources */
   students: {
-    list: (params: URLSearchParams) =>
-      authenticatedRequest<StudentListResponse>(
-        `/students?${params.toString()}`,
-      ),
+    list: (params?: URLSearchParams) =>
+      authenticatedRequest<{
+        items: Student[];
+        pagination: { page: number; limit: number; total: number };
+      }>(params ? `/students?${params.toString()}` : "/students"),
     get: (id: string) => authenticatedRequest<Student>(`/students/${id}`),
-    create: (
-      payload: StudentPayload,
-      photos: StudentPhotoFiles = {},
-      removedPhotos: StudentPhotoField[] = [],
-    ) =>
-      authenticatedRequest<Student>("/students", {
+    create: (payload: CreateStudentPayload, files?: {
+      student_photo?: File;
+      father_photo?: File;
+      mother_photo?: File;
+    }) => {
+      const body = new FormData();
+      body.append("payload", JSON.stringify(payload));
+      if (files?.student_photo) body.append("student_photo", files.student_photo);
+      if (files?.father_photo) body.append("father_photo", files.father_photo);
+      if (files?.mother_photo) body.append("mother_photo", files.mother_photo);
+      return authenticatedRequest<Student>("/students", {
         method: "POST",
-        body: Object.keys(photos).length || removedPhotos.length
-          ? studentFormData(payload, photos, removedPhotos)
-          : JSON.stringify(payload),
-      }),
-    update: (
-      id: string,
-      payload: Partial<StudentPayload>,
-      photos: StudentPhotoFiles = {},
-      removedPhotos: StudentPhotoField[] = [],
-    ) =>
-      authenticatedRequest<Student>(`/students/${id}`, {
-        method: "PATCH",
-        body: Object.keys(photos).length || removedPhotos.length
-          ? studentFormData(payload, photos, removedPhotos)
-          : JSON.stringify(payload),
-      }),
+        body,
+      });
+    },
     delete: (id: string) =>
-      authenticatedRequest<{ success: boolean }>(`/students/${id}`, {
-        method: "DELETE",
-      }),
-  },
-  studentPromotions: {
-    candidates: (params: URLSearchParams) =>
-      authenticatedRequest<{
-        items: PromotionCandidate[];
-        pagination: { page: number; limit: number; total: number };
-      }>(`/student-promotions/candidates?${params.toString()}`),
-    preview: (payload: {
-      source: PromotionFilters;
-      target: PromotionTarget;
-      students: PromotionStudent[];
-    }) =>
-      authenticatedRequest<PromotionPreview>("/student-promotions/preview", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    commit: (payload: {
-      source: PromotionFilters;
-      target: PromotionTarget;
-      students: PromotionStudent[];
-      idempotency_key: string;
-    }) =>
-      authenticatedRequest<PromotionBatch>("/student-promotions", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    get: (id: string, params = new URLSearchParams()) =>
-      authenticatedRequest<PromotionBatchResult>(
-        `/student-promotions/${id}?${params.toString()}`,
-      ),
-    history: (studentId: string, params = new URLSearchParams()) =>
-      authenticatedRequest<{
-        items: EnrollmentHistory[];
-        pagination: { page: number; limit: number; total: number };
-      }>(
-        `/student-promotions/students/${studentId}/history?${params.toString()}`,
-      ),
+      authenticatedRequest<void>(`/students/${id}`, { method: "DELETE" }),
   },
 };

@@ -29,8 +29,7 @@ export default function AcademicSetupPage() {
         </p>
         <h1 className="text-2xl font-bold text-slate-950">Academic setup</h1>
         <p className="mt-1 text-slate-600">
-          Configure your academic structure in order before student and teaching
-          workflows begin.
+          Configure your academic structure before teaching workflows begin.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

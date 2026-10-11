@@ -286,6 +286,10 @@ export default function AddStudentPage() {
 
   // Step 2 form fields
   const [name, setName] = useState("");
+  const [gender, setGender] = useState(() => step1.gender || "male");
+  const [nationality, setNationality] = useState(
+    () => step1.nationality || "Bangladeshi",
+  );
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [admissionDate, setAdmissionDate] = useState("");
@@ -457,6 +461,8 @@ export default function AddStudentPage() {
   // Go to next step
   const handleGoToNext = () => {
     saveToStorage(step1);
+    setGender(step1.gender || "male");
+    setNationality(step1.nationality || "Bangladeshi");
     setCurrentStep(2);
   };
 
@@ -485,9 +491,9 @@ export default function AddStudentPage() {
         },
         name: name || undefined,
         date_of_birth: dateOfBirth || undefined,
-        gender: (step1.gender as StudentGender) || undefined,
+        gender: (gender as StudentGender) || (step1.gender as StudentGender) || undefined,
         blood_group: bloodGroup || undefined,
-        nationality: step1.nationality || undefined,
+        nationality: nationality || step1.nationality || undefined,
         religion: step1.religion || undefined,
         admission_date: admissionDate || undefined,
         status: (step1.status as StudentStatus) || "active",
@@ -564,6 +570,8 @@ export default function AddStudentPage() {
 
   const resetStep2Form = () => {
     setName("");
+    setGender(step1.gender || "male");
+    setNationality(step1.nationality || "Bangladeshi");
     setDateOfBirth("");
     setBloodGroup("");
     setAdmissionDate("");
@@ -785,11 +793,11 @@ export default function AddStudentPage() {
                   </span>
                 </div>
               )}
-              {step1.gender && (
+              {gender && (
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="font-semibold text-slate-500">Gender:</span>
                   <span className="font-bold capitalize text-slate-800">
-                    {step1.gender}
+                    {gender}
                   </span>
                 </div>
               )}
@@ -854,6 +862,12 @@ export default function AddStudentPage() {
                     onChange={setName}
                     placeholder="Student full name"
                   />
+                  <FormSelect
+                    label="Gender"
+                    value={gender}
+                    onChange={setGender}
+                    options={GENDER_OPTIONS}
+                  />
                   <FormInput
                     label="Date of Birth"
                     value={dateOfBirth}
@@ -865,6 +879,12 @@ export default function AddStudentPage() {
                     value={bloodGroup}
                     onChange={setBloodGroup}
                     options={BLOOD_GROUPS.map((b) => ({ value: b, label: b }))}
+                  />
+                  <FormInput
+                    label="Nationality"
+                    value={nationality}
+                    onChange={setNationality}
+                    placeholder="Bangladeshi"
                   />
                   <FormInput
                     label="Admission Date"
@@ -885,7 +905,101 @@ export default function AddStudentPage() {
                     onChange={setRegistrationNo}
                     placeholder="REG-12345"
                   />
+                  <FormInput
+                    label="Notification Number"
+                    value={primarySms}
+                    onChange={setPrimarySms}
+                    placeholder="01711223344"
+                  />
+                  <FormInput
+                    label="Secondary SMS Number"
+                    value={secondarySms}
+                    onChange={setSecondarySms}
+                    placeholder="01811223344"
+                  />
+                  <FormInput
+                    label="Father Name"
+                    value={fatherName}
+                    onChange={setFatherName}
+                    placeholder="Father's name"
+                  />
+                  <FormInput
+                    label="Father Occupation"
+                    value={fatherOccupation}
+                    onChange={setFatherOccupation}
+                    placeholder="Business"
+                  />
+                  <FormInput
+                    label="Father Mobile"
+                    value={fatherMobile}
+                    onChange={setFatherMobile}
+                    placeholder="01711223344"
+                  />
+                  <FormInput
+                    label="Father NID"
+                    value={fatherNid}
+                    onChange={setFatherNid}
+                    placeholder="NID number"
+                  />
+                  <FormInput
+                    label="Father Annual Income"
+                    value={fatherIncome}
+                    onChange={setFatherIncome}
+                    type="number"
+                    placeholder="600000"
+                  />
+                  <FormInput
+                    label="Mother Name"
+                    value={motherName}
+                    onChange={setMotherName}
+                    placeholder="Mother's name"
+                  />
+                  <FormInput
+                    label="Mother Occupation"
+                    value={motherOccupation}
+                    onChange={setMotherOccupation}
+                    placeholder="Teacher"
+                  />
+                  <FormInput
+                    label="Mother Mobile"
+                    value={motherMobile}
+                    onChange={setMotherMobile}
+                    placeholder="01811223344"
+                  />
+                  <FormInput
+                    label="Mother NID"
+                    value={motherNid}
+                    onChange={setMotherNid}
+                    placeholder="NID number"
+                  />
+                  <FormInput
+                    label="Mother Annual Income"
+                    value={motherIncome}
+                    onChange={setMotherIncome}
+                    type="number"
+                    placeholder="480000"
+                  />
+                  <FormInput
+                    label="Local Guardian Name"
+                    value={guardianName}
+                    onChange={setGuardianName}
+                    placeholder="Guardian name"
+                  />
+                  <FormInput
+                    label="Local Guardian Relationship"
+                    value={guardianRelationship}
+                    onChange={setGuardianRelationship}
+                    placeholder="Uncle"
+                  />
+                  <FormInput
+                    label="Local Guardian Contact"
+                    value={guardianContact}
+                    onChange={setGuardianContact}
+                    placeholder="01911223344"
+                  />
+
                 </div>
+
               </fieldset>
 
               {/* Present Address */}
@@ -985,151 +1099,6 @@ export default function AddStudentPage() {
                 </fieldset>
               )}
 
-              {/* Contact */}
-              <fieldset>
-                <legend className="mb-3 text-sm font-bold text-slate-800">
-                  Contact Information
-                </legend>
-                <div className="flex flex-wrap gap-3">
-                  <FormInput
-                    label="Primary SMS"
-                    value={primarySms}
-                    onChange={setPrimarySms}
-                    placeholder="01711223344"
-                  />
-                  <FormInput
-                    label="Secondary SMS"
-                    value={secondarySms}
-                    onChange={setSecondarySms}
-                    placeholder="01811223344"
-                  />
-                  <FormInput
-                    label="Parents SMS"
-                    value={parentsSms}
-                    onChange={setParentsSms}
-                    placeholder="01711223344"
-                  />
-                </div>
-              </fieldset>
-
-              {/* Father Info */}
-              <fieldset>
-                <legend className="mb-3 text-sm font-bold text-slate-800">
-                  Father&apos;s Information
-                </legend>
-                <div className="flex flex-wrap gap-3">
-                  <FormInput
-                    label="Father Name"
-                    value={fatherName}
-                    onChange={setFatherName}
-                    placeholder="Father's name"
-                  />
-                  <FormInput
-                    label="Occupation"
-                    value={fatherOccupation}
-                    onChange={setFatherOccupation}
-                    placeholder="Business"
-                  />
-                  <FormInput
-                    label="Occupation Details"
-                    value={fatherOccupationDetails}
-                    onChange={setFatherOccupationDetails}
-                    placeholder="Details"
-                  />
-                  <FormInput
-                    label="Mobile"
-                    value={fatherMobile}
-                    onChange={setFatherMobile}
-                    placeholder="01711223344"
-                  />
-                  <FormInput
-                    label="NID"
-                    value={fatherNid}
-                    onChange={setFatherNid}
-                    placeholder="NID number"
-                  />
-                  <FormInput
-                    label="Annual Income"
-                    value={fatherIncome}
-                    onChange={setFatherIncome}
-                    type="number"
-                    placeholder="600000"
-                  />
-                </div>
-              </fieldset>
-
-              {/* Mother Info */}
-              <fieldset>
-                <legend className="mb-3 text-sm font-bold text-slate-800">
-                  Mother&apos;s Information
-                </legend>
-                <div className="flex flex-wrap gap-3">
-                  <FormInput
-                    label="Mother Name"
-                    value={motherName}
-                    onChange={setMotherName}
-                    placeholder="Mother's name"
-                  />
-                  <FormInput
-                    label="Occupation"
-                    value={motherOccupation}
-                    onChange={setMotherOccupation}
-                    placeholder="Teacher"
-                  />
-                  <FormInput
-                    label="Occupation Details"
-                    value={motherOccupationDetails}
-                    onChange={setMotherOccupationDetails}
-                    placeholder="Details"
-                  />
-                  <FormInput
-                    label="Mobile"
-                    value={motherMobile}
-                    onChange={setMotherMobile}
-                    placeholder="01811223344"
-                  />
-                  <FormInput
-                    label="NID"
-                    value={motherNid}
-                    onChange={setMotherNid}
-                    placeholder="NID number"
-                  />
-                  <FormInput
-                    label="Annual Income"
-                    value={motherIncome}
-                    onChange={setMotherIncome}
-                    type="number"
-                    placeholder="480000"
-                  />
-                </div>
-              </fieldset>
-
-              {/* Local Guardian */}
-              <fieldset>
-                <legend className="mb-3 text-sm font-bold text-slate-800">
-                  Local Guardian
-                </legend>
-                <div className="flex flex-wrap gap-3">
-                  <FormInput
-                    label="Guardian Name"
-                    value={guardianName}
-                    onChange={setGuardianName}
-                    placeholder="Guardian name"
-                  />
-                  <FormInput
-                    label="Relationship"
-                    value={guardianRelationship}
-                    onChange={setGuardianRelationship}
-                    placeholder="Uncle"
-                  />
-                  <FormInput
-                    label="Contact"
-                    value={guardianContact}
-                    onChange={setGuardianContact}
-                    placeholder="01911223344"
-                  />
-                </div>
-              </fieldset>
 
               {/* Previous School */}
               <fieldset>
@@ -1187,7 +1156,7 @@ export default function AddStudentPage() {
                 <legend className="mb-3 text-sm font-bold text-slate-800">
                   Remarks
                 </legend>
-                <div className="w-[300px]">
+                <div className="w-full">
                   <textarea
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
@@ -1226,8 +1195,9 @@ export default function AddStudentPage() {
               </fieldset>
             </div>
           </Card>
-        </form>
-      )}
-    </div>
+        </form >
+      )
+      }
+    </div >
   );
 }

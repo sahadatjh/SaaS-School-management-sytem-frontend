@@ -463,8 +463,8 @@ export default function StudentsPage() {
                     <td className="whitespace-nowrap px-5 py-3">
                       <StatusBadge
                         isActive={student.status === "active"}
-                        activeLabel={student.status || "active"}
-                        inactiveLabel={student.status || "inactive"}
+                        activeText={student.status || "active"}
+                        inactiveText={student.status || "inactive"}
                       />
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-600">

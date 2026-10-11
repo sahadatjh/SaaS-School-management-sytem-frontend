@@ -686,7 +686,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
         <Navigation onNavigate={isLocked ? undefined : () => setSidebarOpen(false)} />
       </div>
       <div className="p-3 border-t border-slate-100 shrink-0 bg-white space-y-2">
-        <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
+        {/* <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
               <CircleHelp className="size-5 text-orange-500" />
@@ -701,7 +701,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <ChevronRight className="size-4 text-slate-400 shrink-0" />
-        </div>
+        </div> */}
         <Button
           variant="ghost"
           onClick={signOut}

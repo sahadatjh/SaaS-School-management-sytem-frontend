@@ -15,11 +15,13 @@ import {
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
+  Lock,
   type LucideIcon,
   Menu,
   PieChart,
   Search,
   Settings,
+  Unlock,
   User,
   Users,
   Wallet,
@@ -597,6 +599,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   const { profile, loading } = usePortal();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   async function signOut() {
     await portalApi.logout();
@@ -611,148 +614,192 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4">
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0"
-              aria-label="Open navigation"
-            >
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <div className="flex h-full flex-col">
-              <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-                    E
-                  </div>
-                  <span className="font-bold text-slate-900 text-lg tracking-tight">
-                    Edu Soft
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Close navigation"
-                  onClick={() => setSidebarOpen(false)}
-                  className="text-slate-500 hover:text-slate-800"
-                >
-                  <X className="size-5" />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-3 py-3">
-                <Navigation onNavigate={() => setSidebarOpen(false)} />
-              </div>
-              <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
-                      <CircleHelp className="size-5 text-orange-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800 leading-tight">
-                        Need help?
-                      </p>
-                      <p className="text-xs text-slate-400 leading-tight mt-0.5">
-                        Visit our help center
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="size-4 text-slate-400 shrink-0" />
-                </div>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* Brand Logo in Navbar */}
-        <div className="flex items-center gap-2.5 shrink-0 mr-1">
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
+      <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
+        <div className="flex items-center gap-2.5">
           <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
             E
           </div>
-          <span className="font-bold text-slate-900 text-lg tracking-tight hidden sm:inline">
+          <span className="font-bold text-slate-900 text-lg tracking-tight">
             Edu Soft
           </span>
         </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-slate-950">
-            {profile.institution.name}
-          </p>
-          <p className="text-xs text-slate-500">
-            {profile.institution.timezone}
-          </p>
-        </div>
-
-        <label className="relative hidden max-w-sm flex-1 md:block">
-          <span className="sr-only">Search portal</span>
-          <Search
-            className="absolute left-3 top-3 size-4 text-slate-400"
-            aria-hidden="true"
-          />
-          <Input
-            placeholder="Search (coming soon)"
-            disabled
-            className="pl-9"
-          />
-        </label>
-
-        <Button variant="ghost" aria-label="Notifications">
-          <Bell className="size-5" />
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={isLocked ? "Unlock sidebar" : "Lock sidebar"}
+            onClick={() => {
+              setIsLocked((prev) => {
+                if (!prev) {
+                  // Locking: close the sheet overlay, sidebar stays as fixed panel
+                  setSidebarOpen(false);
+                }
+                return !prev;
+              });
+            }}
+            className={cn(
+              "text-slate-500 hover:text-slate-800",
+              isLocked && "text-orange-600 hover:text-orange-700",
+            )}
+          >
+            {isLocked ? (
+              <Lock className="size-4" />
+            ) : (
+              <Unlock className="size-4" />
+            )}
+          </Button>
+          {!isLocked && (
             <Button
               variant="ghost"
-              aria-label="Open user menu"
-              className="size-10 overflow-hidden rounded-full border-2 border-orange-300 bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
+              size="icon"
+              aria-label="Close navigation"
+              onClick={() => setSidebarOpen(false)}
+              className="text-slate-500 hover:text-slate-800"
             >
-              <UserAvatar
-                key={profile.user.avatar?.url ?? "fallback"}
-                displayName={profile.user.displayName}
-                email={profile.user.email}
-                avatarUrl={profile.user.avatar?.url}
-              />
+              <X className="size-5" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="z-50 mt-2 min-w-52 rounded-lg border bg-white p-1 shadow-lg">
-            <div className="border-b px-3 py-2">
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {profile.user.displayName || profile.user.email}
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        <Navigation onNavigate={isLocked ? undefined : () => setSidebarOpen(false)} />
+      </div>
+      <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+              <CircleHelp className="size-5 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800 leading-tight">
+                Need help?
               </p>
-              <p className="truncate text-xs text-slate-500">
-                {profile.user.email}
+              <p className="text-xs text-slate-400 leading-tight mt-0.5">
+                Visit our help center
               </p>
             </div>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/settings/profile"
-                className="mt-1 flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"
-              >
-                <User className="size-4" />
-                My Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={signOut}
-              className="cursor-pointer rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"
-            >
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+          </div>
+          <ChevronRight className="size-4 text-slate-400 shrink-0" />
+        </div>
+      </div>
+    </div>
+  );
 
-      {/* Content Body */}
-      <main className="flex-1 p-4 sm:p-6 min-w-0">{children}</main>
+  return (
+    <div className="min-h-screen bg-slate-100 flex">
+      {/* Locked sidebar: full-height left panel */}
+      {isLocked && (
+        <aside className="w-72 shrink-0 border-r border-slate-200 bg-white h-screen sticky top-0 overflow-hidden">
+          {sidebarContent}
+        </aside>
+      )}
+
+      {/* Right side: header + content stacked vertically */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Top Navbar */}
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4">
+          {!isLocked && (
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0"
+                  aria-label="Open navigation"
+                >
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>{sidebarContent}</SheetContent>
+            </Sheet>
+          )}
+
+          {/* Brand Logo in Navbar — hidden when sidebar is locked (logo already in sidebar) */}
+          {!isLocked && (
+            <div className="flex items-center gap-2.5 shrink-0 mr-1">
+              <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                E
+              </div>
+              <span className="font-bold text-slate-900 text-lg tracking-tight hidden sm:inline">
+                Edu Soft
+              </span>
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-950">
+              {profile.institution.name}
+            </p>
+            <p className="text-xs text-slate-500">
+              {profile.institution.timezone}
+            </p>
+          </div>
+
+          <label className="relative hidden max-w-sm flex-1 md:block">
+            <span className="sr-only">Search portal</span>
+            <Search
+              className="absolute left-3 top-3 size-4 text-slate-400"
+              aria-hidden="true"
+            />
+            <Input
+              placeholder="Search (coming soon)"
+              disabled
+              className="pl-9"
+            />
+          </label>
+
+          <Button variant="ghost" aria-label="Notifications">
+            <Bell className="size-5" />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                aria-label="Open user menu"
+                className="size-10 overflow-hidden rounded-full border-2 border-orange-300 bg-orange-100 p-0 text-sm font-bold text-orange-700 hover:bg-orange-200"
+              >
+                <UserAvatar
+                  key={profile.user.avatar?.url ?? "fallback"}
+                  displayName={profile.user.displayName}
+                  email={profile.user.email}
+                  avatarUrl={profile.user.avatar?.url}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="z-50 mt-2 min-w-52 rounded-lg border bg-white p-1 shadow-lg">
+              <div className="border-b px-3 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {profile.user.displayName || profile.user.email}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {profile.user.email}
+                </p>
+              </div>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/settings/profile"
+                  className="mt-1 flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"
+                >
+                  <User className="size-4" />
+                  My Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={signOut}
+                className="cursor-pointer rounded px-3 py-2 text-sm outline-none hover:bg-slate-100"
+              >
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+
+        {/* Content Body */}
+        <main className="flex-1 p-4 sm:p-6 min-w-0">{children}</main>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Eye,
@@ -57,28 +57,48 @@ export default function StudentsPage() {
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Load filter dropdown data
+  // Load filter dropdown data (year, class, shift — always available)
   useEffect(() => {
     const loadFilterData = async () => {
       try {
-        const [y, c, sh, sec, g] = await Promise.all([
+        const [y, c, sh] = await Promise.all([
           portalApi.academicYears.list(),
           portalApi.classes.list(),
           portalApi.shifts.list(),
-          portalApi.sections.list(),
-          portalApi.groups.list(),
         ]);
         setYears(y);
         setClasses(c);
         setShifts(sh);
-        setSections(sec);
-        setGroups(g);
       } catch {
         // Filter data load failure is non-critical
       }
     };
     void loadFilterData();
   }, []);
+
+  // Load sections & groups when a class is selected
+  useEffect(() => {
+    if (!selectedClass) {
+      setSections([]);
+      setGroups([]);
+      return;
+    }
+    const loadClassDependents = async () => {
+      try {
+        const params = new URLSearchParams({ class_id: selectedClass });
+        const [sec, g] = await Promise.all([
+          portalApi.sections.list(params),
+          portalApi.groups.list(params),
+        ]);
+        setSections(sec);
+        setGroups(g);
+      } catch {
+        setSections([]);
+        setGroups([]);
+      }
+    };
+    void loadClassDependents();
+  }, [selectedClass]);
 
   const buildParams = useCallback(
     (pageNum: number) => {
@@ -167,21 +187,7 @@ export default function StudentsPage() {
     void loadStudents();
   };
 
-  const filteredSections = useMemo(
-    () =>
-      selectedClass
-        ? sections.filter((s) => s.class_id === selectedClass)
-        : sections,
-    [selectedClass, sections],
-  );
 
-  const filteredGroups = useMemo(
-    () =>
-      selectedClass
-        ? groups.filter((g) => g.class_id === selectedClass)
-        : groups,
-    [selectedClass, groups],
-  );
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -275,28 +281,30 @@ export default function StudentsPage() {
                 ))}
               </select>
 
-              {/* Section */}
+              {/* Section — depends on class */}
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="h-9 rounded-md border border-slate-200 bg-slate-50/70 px-2.5 text-xs text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400"
+                disabled={!selectedClass}
+                className="h-9 rounded-md border border-slate-200 bg-slate-50/70 px-2.5 text-xs text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">All Sections</option>
-                {filteredSections.map((s) => (
+                {sections.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
                 ))}
               </select>
 
-              {/* Group */}
+              {/* Group — depends on class */}
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="h-9 rounded-md border border-slate-200 bg-slate-50/70 px-2.5 text-xs text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400"
+                disabled={!selectedClass}
+                className="h-9 rounded-md border border-slate-200 bg-slate-50/70 px-2.5 text-xs text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">All Groups</option>
-                {filteredGroups.map((g) => (
+                {groups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}
                   </option>

@@ -1,20 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   ImagePlus,
   Loader2,
   Save,
+  Search,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { portalApi } from "@/lib/portal-api";
 import { toast } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import type {
   AcademicYear,
   Class,
@@ -24,6 +27,7 @@ import type {
   Department,
   Medium,
   CreateStudentPayload,
+  Student,
   StudentGender,
   StudentStatus,
 } from "@/lib/contracts";
@@ -245,6 +249,203 @@ function ImageUpload({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sibling Search & Link Component                                    */
+/* ------------------------------------------------------------------ */
+type SiblingOption = {
+  id: string;
+  name: string;
+  student_id?: string;
+  className?: string;
+  rollNo?: number | null;
+};
+
+function SiblingSearch({
+  selectedSiblings,
+  onAddSibling,
+  onRemoveSibling,
+}: {
+  selectedSiblings: SiblingOption[];
+  onAddSibling: (sibling: SiblingOption) => void;
+  onRemoveSibling: (id: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ search: trimmed, limit: "8" });
+        const res = await portalApi.students.list(params);
+        setResults(res.items || []);
+        setIsOpen(true);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (st: Student) => {
+    if (!selectedSiblings.some((s) => s.id === st.id)) {
+      onAddSibling({
+        id: st.id,
+        name: st.name || st.student_id,
+        student_id: st.student_id,
+        className: st.enrollment?.class_name,
+        rollNo: st.enrollment?.roll_no,
+      });
+    }
+    setQuery("");
+    setIsOpen(false);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2"
+    >
+      <label className="mb-1 block text-xs font-semibold text-slate-700">
+        Siblings (Search & Link)
+      </label>
+      <div className="relative">
+        <Input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!isOpen && e.target.value.trim().length >= 2) setIsOpen(true);
+          }}
+          onFocus={() => {
+            if (query.trim().length >= 2 && results.length > 0) {
+              setIsOpen(true);
+            }
+          }}
+          placeholder="Type sibling name or ID to search..."
+          className="h-9 w-full border-slate-200 bg-slate-50/70 pr-8 text-xs transition-colors focus:bg-white"
+        />
+        <div className="absolute right-2.5 top-2.5 text-slate-400 pointer-events-none">
+          {loading ? (
+            <Loader2 className="size-4 animate-spin text-orange-500" />
+          ) : (
+            <Search className="size-4" />
+          )}
+        </div>
+      </div>
+
+      {/* Dropdown Results */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+          {loading && (
+            <div className="px-3 py-2 text-center text-xs text-slate-400">
+              Searching students...
+            </div>
+          )}
+          {!loading && results.length === 0 && (
+            <div className="px-3 py-2 text-center text-xs text-slate-400">
+              No matching student found
+            </div>
+          )}
+          {!loading &&
+            results.map((st) => {
+              const alreadySelected = selectedSiblings.some((s) => s.id === st.id);
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  disabled={alreadySelected}
+                  onClick={() => handleSelect(st)}
+                  className={cn(
+                    "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors",
+                    alreadySelected
+                      ? "bg-slate-50 text-slate-400 cursor-not-allowed"
+                      : "hover:bg-orange-50 text-slate-700 cursor-pointer"
+                  )}
+                >
+                  <div>
+                    <span className="font-semibold text-slate-900">
+                      {st.name || "Unnamed Student"}
+                    </span>
+                    <span className="ml-1.5 text-[11px] text-slate-500">
+                      ({st.father_name})
+                    </span>
+                    {st.enrollment?.class_name && (
+                      <span className="ml-1.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">
+                        {st.enrollment.class_name}
+                        {st.enrollment.section_name ? ` - ${st.enrollment.section_name}` : ""}
+                        {st.enrollment.roll_no ? ` | Roll: ${st.enrollment.roll_no}` : ""}
+                      </span>
+                    )}
+                  </div>
+                  {alreadySelected && (
+                    <span className="text-[10px] text-orange-600 font-medium">
+                      Added
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+        </div>
+      )}
+
+      {/* Selected Sibling Badges */}
+      {selectedSiblings.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {selectedSiblings.map((sib) => (
+            <span
+              key={sib.id}
+              className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-900 shadow-xs"
+            >
+              <span>
+                {sib.name}
+                {sib.student_id ? ` (${sib.student_id})` : ""}
+                {sib.className ? ` • ${sib.className}${sib.rollNo ? ` / ${sib.rollNo}` : ""}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRemoveSibling(sib.id)}
+                className="ml-1 rounded p-0.5 text-orange-500 hover:bg-orange-200 hover:text-orange-900"
+                aria-label={`Remove ${sib.name}`}
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Page Component                                                */
 /* ------------------------------------------------------------------ */
 export default function AddStudentPage() {
@@ -343,6 +544,7 @@ export default function AddStudentPage() {
   const [guardianName, setGuardianName] = useState("");
   const [guardianRelationship, setGuardianRelationship] = useState("");
   const [guardianContact, setGuardianContact] = useState("");
+  const [selectedSiblings, setSelectedSiblings] = useState<SiblingOption[]>([]);
 
   // Remarks
   const [remarks, setRemarks] = useState("");
@@ -539,6 +741,10 @@ export default function AddStudentPage() {
         local_guardian_name: guardianName || undefined,
         local_guardian_relationship: guardianRelationship || undefined,
         local_guardian_contact: guardianContact || undefined,
+        sibling_student_ids:
+          selectedSiblings.length > 0
+            ? selectedSiblings.map((s) => s.id)
+            : undefined,
 
         remarks: remarks || undefined,
       };
@@ -613,6 +819,7 @@ export default function AddStudentPage() {
     setGuardianName("");
     setGuardianRelationship("");
     setGuardianContact("");
+    setSelectedSiblings([]);
     setRemarks("");
     setStudentImage({ file: null, preview: null });
     setFatherImage({ file: null, preview: null });
@@ -996,6 +1203,17 @@ export default function AddStudentPage() {
                     value={guardianContact}
                     onChange={setGuardianContact}
                     placeholder="01911223344"
+                  />
+                  <SiblingSearch
+                    selectedSiblings={selectedSiblings}
+                    onAddSibling={(sibling) =>
+                      setSelectedSiblings((prev) => [...prev, sibling])
+                    }
+                    onRemoveSibling={(id) =>
+                      setSelectedSiblings((prev) =>
+                        prev.filter((s) => s.id !== id),
+                      )
+                    }
                   />
 
                 </div>

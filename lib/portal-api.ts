@@ -32,19 +32,10 @@ import type {
   SubjectPayload,
   TeacherAssignment,
   TeacherAssignmentPayload,
-  Student,
-  StudentPayload,
-  StudentListResponse,
-  PromotionBatch,
-  PromotionBatchResult,
-  PromotionCandidate,
-  PromotionFilters,
-  PromotionPreview,
-  PromotionStudent,
-  PromotionTarget,
-  EnrollmentHistory,
   Medium,
   MediumPayload,
+  Student,
+  CreateStudentPayload,
 } from "@/lib/contracts";
 
 const API_BASE_URL = (
@@ -310,63 +301,30 @@ export const portalApi = {
     "/teacher-assignments",
   ),
 
-  /* Students */
+  /* Student resources */
   students: {
-    list: (params: URLSearchParams) =>
-      authenticatedRequest<StudentListResponse>(
-        `/students?${params.toString()}`,
-      ),
+    list: (params?: URLSearchParams) =>
+      authenticatedRequest<{
+        items: Student[];
+        pagination: { page: number; limit: number; total: number };
+      }>(params ? `/students?${params.toString()}` : "/students"),
     get: (id: string) => authenticatedRequest<Student>(`/students/${id}`),
-    create: (payload: StudentPayload) =>
-      authenticatedRequest<Student>("/students", {
+    create: (payload: CreateStudentPayload, files?: {
+      student_photo?: File;
+      father_photo?: File;
+      mother_photo?: File;
+    }) => {
+      const body = new FormData();
+      body.append("payload", JSON.stringify(payload));
+      if (files?.student_photo) body.append("student_photo", files.student_photo);
+      if (files?.father_photo) body.append("father_photo", files.father_photo);
+      if (files?.mother_photo) body.append("mother_photo", files.mother_photo);
+      return authenticatedRequest<Student>("/students", {
         method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    update: (id: string, payload: Partial<StudentPayload>) =>
-      authenticatedRequest<Student>(`/students/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      }),
+        body,
+      });
+    },
     delete: (id: string) =>
-      authenticatedRequest<{ success: boolean }>(`/students/${id}`, {
-        method: "DELETE",
-      }),
-  },
-  studentPromotions: {
-    candidates: (params: URLSearchParams) =>
-      authenticatedRequest<{
-        items: PromotionCandidate[];
-        pagination: { page: number; limit: number; total: number };
-      }>(`/student-promotions/candidates?${params.toString()}`),
-    preview: (payload: {
-      source: PromotionFilters;
-      target: PromotionTarget;
-      students: PromotionStudent[];
-    }) =>
-      authenticatedRequest<PromotionPreview>("/student-promotions/preview", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    commit: (payload: {
-      source: PromotionFilters;
-      target: PromotionTarget;
-      students: PromotionStudent[];
-      idempotency_key: string;
-    }) =>
-      authenticatedRequest<PromotionBatch>("/student-promotions", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    get: (id: string, params = new URLSearchParams()) =>
-      authenticatedRequest<PromotionBatchResult>(
-        `/student-promotions/${id}?${params.toString()}`,
-      ),
-    history: (studentId: string, params = new URLSearchParams()) =>
-      authenticatedRequest<{
-        items: EnrollmentHistory[];
-        pagination: { page: number; limit: number; total: number };
-      }>(
-        `/student-promotions/students/${studentId}/history?${params.toString()}`,
-      ),
+      authenticatedRequest<void>(`/students/${id}`, { method: "DELETE" }),
   },
 };

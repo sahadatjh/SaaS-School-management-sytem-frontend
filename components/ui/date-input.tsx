@@ -40,12 +40,12 @@ const CALENDAR_GAP = 6;
 function applyDmyMask(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 8);
   if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
 }
 
 function isValidDmy(dmy: string): boolean {
-  const match = dmy.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const match = dmy.match(/^(\d{2})-(\d{2})-(\d{4})$/);
   if (!match) return false;
   const [, dStr, mStr, yStr] = match;
   const d = parseInt(dStr, 10);
@@ -68,7 +68,7 @@ export function DateInput({
   onChange,
   required = false,
   disabled = false,
-  placeholder = "dd/mm/yyyy",
+  placeholder = "dd-mm-yyyy",
   className,
 }: DateInputProps) {
   const [displayValue, setDisplayValue] = useState(() => isoToDmy(value));
@@ -170,7 +170,7 @@ export function DateInput({
       if (isValidDmy(masked)) {
         const iso = dmyToIso(masked);
         onChange?.(iso);
-        const [d, m, y] = masked.split("/").map(Number);
+        const [, m, y] = masked.split("-").map(Number);
         setViewYear(y);
         setViewMonth(m - 1);
       }
@@ -185,7 +185,7 @@ export function DateInput({
     const dStr = String(day).padStart(2, "0");
 
     const iso = `${yStr}-${mStr}-${dStr}`;
-    const dmy = `${dStr}/${mStr}/${yStr}`;
+    const dmy = `${dStr}-${mStr}-${yStr}`;
 
     setDisplayValue(dmy);
     onChange?.(iso);
@@ -217,7 +217,7 @@ export function DateInput({
     const dStr = String(today.getDate()).padStart(2, "0");
 
     const iso = `${yStr}-${mStr}-${dStr}`;
-    const dmy = `${dStr}/${mStr}/${yStr}`;
+    const dmy = `${dStr}-${mStr}-${yStr}`;
 
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
@@ -410,7 +410,7 @@ export function DateInput({
           {/* Footer with Today, Clear, and Format Indicator */}
           <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
             <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-              Format: dd/mm/yyyy
+              Format: dd-mm-yyyy
             </div>
             <div className="flex items-center gap-1.5">
               <button

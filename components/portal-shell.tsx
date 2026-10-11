@@ -15,12 +15,14 @@ import {
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
+  Lock,
   LogOut,
   type LucideIcon,
   Menu,
   PieChart,
   Search,
   Settings,
+  Unlock,
   User,
   Users,
   Wallet,
@@ -57,47 +59,6 @@ export const navigationItems: NavItem[] = [
     capability: "academic.read",
   },
   {
-    id: "student-management",
-    label: "Student Management",
-    icon: Users,
-    children: [
-      { id: "all-students", label: "All Students", href: "/academic/students" },
-      {
-        id: "add-student",
-        label: "Add Student",
-        href: "/academic/students/new",
-      },
-      {
-        id: "student-promotion",
-        label: "Student Promotion",
-        href: "/academic/students/promotions",
-        capability: "students.promote",
-      },
-      {
-        id: "certificates",
-        label: "Certificates",
-        children: [
-          {
-            id: "transfer-cert",
-            label: "Transfer Certificate",
-            href: "/students/certificates/transfer",
-          },
-          {
-            id: "character-cert",
-            label: "Character Certificate",
-            href: "/students/certificates/character",
-          },
-          {
-            id: "appreciation-cert",
-            label: "Appreciation Certificate",
-            href: "/students/certificates/appreciation",
-          },
-        ],
-      },
-      { id: "id-cards", label: "ID Cards", href: "/students/id-cards" },
-    ],
-  },
-  {
     id: "academic-management",
     label: "Academic Management",
     icon: BookOpen,
@@ -127,15 +88,48 @@ export const navigationItems: NavItem[] = [
     ],
   },
   {
+    id: "student-management",
+    label: "Student Management",
+    icon: Users,
+    capability: "students.read",
+    children: [
+      {
+        id: "all-students",
+        label: "All Students",
+        href: "/students",
+      },
+      {
+        id: "add-student",
+        label: "Add Student",
+        href: "/students/new",
+      },
+      {
+        id: "student-promotion",
+        label: "Student Promossion",
+        href: "/students/promotion",
+      },
+      {
+        id: "import-students",
+        label: "Improt Students",
+        href: "/students/import",
+      },
+      {
+        id: "id-cards",
+        label: "ID Cards",
+        href: "/students/id-cards",
+      },
+      {
+        id: "transfer-certificates",
+        label: "Transfer Certificates",
+        href: "/students/transfer-certificates",
+      },
+    ],
+  },
+  {
     id: "attendance",
     label: "Attendance",
     icon: ClipboardCheck,
     children: [
-      {
-        id: "student-attendance",
-        label: "Student Attendance",
-        href: "/attendance/students",
-      },
       {
         id: "teacher-attendance",
         label: "Teacher Attendance",
@@ -441,7 +435,7 @@ function Navigation({
           );
         }
 
-        // Top level expandable folder (e.g. Student Management, Academic Management, etc.)
+        // Top-level expandable folder (e.g. Academic Management, Attendance).
         return (
           <div key={item.id} className="space-y-0.5">
             <button
@@ -561,12 +555,8 @@ function Navigation({
                     );
                   }
 
-                  // Normal Level 2 Link Item (e.g. All Students, Add Student, Academic Years, etc.)
-                  const subActive = isRouteActive(
-                    subItem.href,
-                    pathname,
-                    item.children,
-                  );
+                  // Normal level-two link item (e.g. Academic Years or Classes).
+                  const subActive = isRouteActive(subItem.href, pathname);
 
                   return (
                     <Link
@@ -627,8 +617,8 @@ function UserAvatar({
 export function PortalShell({ children }: { children: React.ReactNode }) {
   const { profile, loading } = usePortal();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   async function signOut() {
     await portalApi.logout();
@@ -643,159 +633,127 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex">
-      {/* Desktop Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 hidden border-r border-slate-200/80 bg-white lg:flex lg:flex-col z-30 transition-all duration-200",
-          collapsed ? "w-20" : "w-72",
-        )}
-      >
-        {/* Top Header / Branding */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 shrink-0">
-          <div
-            className={cn(
-              "flex items-center gap-2.5 min-w-0",
-              collapsed && "sr-only",
-            )}
-          >
-            <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm shrink-0">
-              E
-            </div>
-            <span className="font-bold text-slate-900 text-lg tracking-tight truncate">
-              Edu Soft
-            </span>
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
+      <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+            E
           </div>
+          <span className="font-bold text-slate-900 text-lg tracking-tight">
+            Edu Soft
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label="Toggle sidebar"
-            className="text-slate-500 hover:text-slate-800"
+            size="icon"
+            aria-label={isLocked ? "Unlock sidebar" : "Lock sidebar"}
+            onClick={() => {
+              setIsLocked((prev) => {
+                if (!prev) {
+                  // Locking: close the sheet overlay, sidebar stays as fixed panel
+                  setSidebarOpen(false);
+                }
+                return !prev;
+              });
+            }}
+            className={cn(
+              "text-slate-500 hover:text-slate-800",
+              isLocked && "text-orange-600 hover:text-orange-700",
+            )}
           >
-            <Menu className="size-5" />
+            {isLocked ? (
+              <Lock className="size-4" />
+            ) : (
+              <Unlock className="size-4" />
+            )}
           </Button>
-        </div>
-
-        {/* Scrollable Navigation List */}
-        <div className="flex-1 overflow-y-auto px-3 py-3">
-          <Navigation collapsed={collapsed} />
-        </div>
-
-        {/* Bottom Help Center Card */}
-        {!collapsed && (
-          <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100 hover:bg-slate-100/80 transition-colors cursor-pointer group">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
-                  <CircleHelp className="size-5 text-orange-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800 leading-tight">
-                    Need help?
-                  </p>
-                  <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
-                    Visit our help center
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="size-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
-            </div>
-            <Button
-              variant="ghost"
-              onClick={signOut}
-              className="mt-2 w-full justify-start gap-3 text-slate-600 bg-orange-50 text-orange-700"
-            >
-              <LogOut className="size-4" />
-              Log out
-            </Button>
-          </div>
-        )}
-        {collapsed && (
-          <div className="border-t border-slate-100 p-3 shrink-0">
+          {!isLocked && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={signOut}
-              aria-label="Log out"
-              className="w-full text-slate-600 hover:bg-orange-50 hover:text-orange-700"
+              aria-label="Close navigation"
+              onClick={() => setSidebarOpen(false)}
+              className="text-slate-500 hover:text-slate-800"
             >
-              <LogOut className="size-5" />
+              <X className="size-5" />
             </Button>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        <Navigation onNavigate={isLocked ? undefined : () => setSidebarOpen(false)} />
+      </div>
+      <div className="p-3 border-t border-slate-100 shrink-0 bg-white space-y-2">
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+              <CircleHelp className="size-5 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800 leading-tight">
+                Need help?
+              </p>
+              <p className="text-xs text-slate-400 leading-tight mt-0.5">
+                Visit our help center
+              </p>
+            </div>
           </div>
-        )}
-      </aside>
+          <ChevronRight className="size-4 text-slate-400 shrink-0" />
+        </div>
+        <Button
+          variant="ghost"
+          onClick={signOut}
+          className="w-full justify-start gap-3 rounded-xl text-slate-600 hover:bg-orange-50 hover:text-orange-700"
+        >
+          <LogOut className="size-4" />
+          Log out
+        </Button>
+      </div>
+    </div>
+  );
 
-      {/* Main Content Area */}
-      <div
-        className={cn(
-          "flex-1 flex flex-col min-w-0 transition-all duration-200",
-          collapsed ? "lg:ml-20" : "lg:ml-72",
-        )}
-      >
+  return (
+    <div className="min-h-screen bg-slate-100 flex">
+      {/* Locked sidebar: full-height left panel */}
+      {isLocked && (
+        <aside className="w-72 shrink-0 border-r border-slate-200 bg-white h-screen sticky top-0 overflow-hidden">
+          {sidebarContent}
+        </aside>
+      )}
+
+      {/* Right side: header + content stacked vertically */}
+      <div className="flex flex-col flex-1 min-w-0">
         {/* Top Navbar */}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                className="lg:hidden"
-                aria-label="Open navigation"
-              >
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <div className="flex h-full flex-col">
-                <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-                      E
-                    </div>
-                    <span className="font-bold text-slate-900 text-lg tracking-tight">
-                      Edu Soft
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    aria-label="Close navigation"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <X className="size-5" />
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto px-3 py-3">
-                  <Navigation onNavigate={() => setMobileOpen(false)} />
-                </div>
-                <div className="p-3 border-t border-slate-100 shrink-0 bg-white">
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
-                        <CircleHelp className="size-5 text-orange-500" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 leading-tight">
-                          Need help?
-                        </p>
-                        <p className="text-xs text-slate-400 leading-tight mt-0.5">
-                          Visit our help center
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="size-4 text-slate-400 shrink-0" />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    onClick={signOut}
-                    className="mt-2 w-full justify-start gap-3 text-slate-600 hover:bg-orange-50 hover:text-orange-700"
-                  >
-                    <LogOut className="size-4" />
-                    Log out
-                  </Button>
-                </div>
+          {!isLocked && (
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 shrink-0"
+                  aria-label="Open navigation"
+                >
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>{sidebarContent}</SheetContent>
+            </Sheet>
+          )}
+
+          {/* Brand Logo in Navbar — hidden when sidebar is locked (logo already in sidebar) */}
+          {!isLocked && (
+            <div className="flex items-center gap-2.5 shrink-0 mr-1">
+              <div className="size-8 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                E
               </div>
-            </SheetContent>
-          </Sheet>
+              <span className="font-bold text-slate-900 text-lg tracking-tight hidden sm:inline">
+                Edu Soft
+              </span>
+            </div>
+          )}
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-950">
@@ -867,7 +825,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 min-w-0">{children}</main>
       </div>
     </div>
   );
